@@ -1,0 +1,187 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="utf-8">
+    <title><?= data.한글이름 ?> 예약확인서</title>
+    <style>
+      /* A4 세팅 & 인쇄용 스타일 */
+      @page { size: A4; margin: 12mm; }
+      html, body { padding:0; margin:0; font-family: "Noto Sans KR", Arial, sans-serif; }
+      /* 배경 이미지가 인쇄에도 반영되도록 */
+      * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      .page {
+        width: 210mm; min-height: 297mm; box-sizing: border-box; position: relative;
+        background-repeat: no-repeat; background-position: center top; background-size: 100% 100%;
+      }
+      .page + .page { page-break-before: always; }
+      h1, h2, h3 { margin: 0 0 8px; }
+      .section { margin: 12px 0 16px; }
+      .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 8px 16px; }
+      .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px 16px; }
+      .label { font-size: 12px; color:#444; }
+      .value { font-size: 14px; font-weight: 600; }
+      .table { width: 100%; border-collapse: collapse; font-size: 12px; }
+      .table th, .table td { border: 1px solid #ddd; padding: 6px 8px; vertical-align: top; }
+      .muted { color:#666; font-size: 11px; }
+      .right { text-align: right; }
+      .center { text-align: center; }
+      .mb8 { margin-bottom: 8px; }
+      .mb12 { margin-bottom: 12px; }
+      .mb16 { margin-bottom: 16px; }
+      .badge { display:inline-block; padding:2px 8px; border-radius: 12px; background:#f3f4f6; font-size:11px; }
+      .row { display:flex; gap:16px; }
+      .col { flex:1; }
+      .hr { height:1px; background:#e5e7eb; margin:12px 0; }
+    </style>
+  </head>
+  <body>
+
+    <!-- Page 1: 기본/인원/크루즈 당일 -->
+  <div class="page" style="background-image:url('<?= data.bg1 ?>')">
+      <h1>투어상품 예약확인서</h1>
+      <div class="muted">TOUR PRODUCT RESERVATION CONFIRMATION</div>
+
+      <div class="section">
+        <h2>1) 고객정보</h2>
+        <div class="grid-2">
+          <div>
+            <div class="label">고객명(한글)</div>
+            <div class="value"><?= data.한글이름 ?></div>
+          </div>
+          <div>
+            <div class="label">고객명(영문)</div>
+            <div class="value"><?= data.영문이름 ?></div>
+          </div>
+          <div>
+            <div class="label">이메일</div>
+            <div class="value"><?= data.Email ?></div>
+          </div>
+          <div>
+            <div class="label">카페 닉네임</div>
+            <div class="value"><?= data.닉네임 ?></div>
+          </div>
+          <div>
+            <div class="label">카톡 ID / 연락처</div>
+            <div class="value"><?= data.카톡ID ?></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="section">
+        <h2>2) 인원정보</h2>
+        <div class="grid-3">
+          <div><span class="label">성인</span><div class="value"><?= data.총ADULT ?></div></div>
+          <div><span class="label">아동</span><div class="value"><?= data.총CHILD ?></div></div>
+          <div><span class="label">유아</span><div class="value"><?= data.총TOODLER ?></div></div>
+        </div>
+      </div>
+
+      <div class="section">
+        <h2>3) 당일 크루즈</h2>
+        <div class="grid-2">
+          <div>
+            <div class="label">크루즈명</div>
+            <div class="value"><?= data.크루즈1 ?></div>
+          </div>
+          <div>
+            <div class="label">승선일자</div>
+            <div class="value"><?= data.체크인 ?></div>
+          </div>
+          <div>
+            <div class="label">승차위치</div>
+            <div class="value"><?= data.C승차위치 ?></div>
+          </div>
+          <div>
+            <div class="label">드랍위치</div>
+            <div class="value"><?= data.C하차위치 ?></div>
+          </div>
+          <div>
+            <div class="label">차량종류</div>
+            <div class="value"><?= data.차량종류1 ?></div>
+          </div>
+          <div>
+            <div class="label">승선도움</div>
+            <div class="value"><?= data.승선도움 ?></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="hr"></div>
+      <div class="muted">발급일: <?= data.예약일 ?> (베트남 표준시 기준)</div>
+    </div>
+
+    <!-- Page 2: 숙박형 크루즈/객실 -->
+  <div class="page" style="background-image:url('<?= data.bg2 ?>')">
+      <h2>4) 숙박형 크루즈</h2>
+      <div class="grid-2 mb16">
+        <div>
+          <div class="label">크루즈명</div>
+          <div class="value"><?= data.크루즈1 ?></div>
+        </div>
+        <div>
+          <div class="label">일정</div>
+          <div class="value"><?= data.객실일정1 ?></div>
+        </div>
+        <div>
+          <div class="label">좌석번호</div>
+          <div class="value"><?= data.자차좌석1 ?></div>
+        </div>
+      </div>
+
+      <table class="table">
+        <thead>
+          <tr class="center">
+            <th style="width:35%">객실명</th>
+            <th style="width:15%">성인</th>
+            <th style="width:15%">아동</th>
+            <th style="width:15%">인원수</th>
+            <th style="width:20%">객실금액(VND)</th>
+          </tr>
+        </thead>
+        <tbody>
+          <? for (let i = 1; i <= 5; i++) { ?>
+            <? var rn = data['객실종류'+i], ad = data['ADULT'+i], ch = data['CHILD'+i], pax = data['인원수'+i], price = data['객실금액'+i]; ?>
+            <? if (rn || ad || ch || pax || price) { ?>
+              <tr>
+                <td><?= rn ?></td>
+                <td class="center"><?= ad ?></td>
+                <td class="center"><?= ch ?></td>
+                <td class="center"><?= pax ?></td>
+                <td class="right"><?= price ?></td>
+              </tr>
+            <? } ?>
+          <? } ?>
+        </tbody>
+      </table>
+
+      <div class="hr"></div>
+      <div class="muted">요청사항: <?= data.요청사항 ?></div>
+    </div>
+
+    <!-- Page 3: 공항/렌트/투어/티켓(필요만큼 복사해서 페이지 늘리기) -->
+  <div class="page" style="background-image:url('<?= data.bg3 ?>')">
+      <h2>5) 공항 픽업/샌딩</h2>
+      <div class="grid-2 mb12">
+        <div><div class="label">픽업일자</div><div class="value"><?= data.픽업일자 ?></div></div>
+        <div><div class="label">샌딩일자</div><div class="value"><?= data.샌딩일자 ?></div></div>
+        <div><div class="label">도착공항</div><div class="value"><?= data.픽업공항 ?></div></div>
+        <div><div class="label">출국공항</div><div class="value"><?= data.샌딩공항 ?></div></div>
+        <div><div class="label">도착시간</div><div class="value"><?= data.픽업시간 ?></div></div>
+        <div><div class="label">승차시간</div><div class="value"><?= data.샌딩시간 ?></div></div>
+        <div><div class="label">항공편명</div><div class="value"><?= data.픽업항공 ?></div></div>
+        <div><div class="label">승차인원(픽업/샌딩)</div><div class="value"><?= data.픽업인원 ?> / <?= data.샌딩인원 ?></div></div>
+        <div><div class="label">캐리어(픽업/샌딩)</div><div class="value"><?= data.픽업캐리어 ?> / <?= data.샌딩캐리어 ?></div></div>
+        <div><div class="label">차량(픽업/샌딩)</div><div class="value"><?= data.픽업차종 ?> / <?= data.샌딩차종 ?></div></div>
+        <div class="col">
+          <div class="label">승차/하차 위치</div>
+          <div class="value"><?= data.픽업장소 ?> / <?= data.샌딩장소 ?></div>
+        </div>
+      </div>
+
+      <!-- 필요시: 렌트/하노이 투어/닌빈 투어/티켓 섹션도 동일 패턴으로 추가 -->
+      <div class="hr"></div>
+      <div class="muted">※ 인쇄 최적화: 여백/줄바꿈은 템플릿에서 조절하세요.</div>
+    </div>
+
+  </body>
+</html>

@@ -1,0 +1,228 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <title><?= data.한글이름 ?> 예약확인서</title>
+  <style>
+    /* 인쇄 & A4 설정 */
+    @page { size: A4; margin: 0; }
+    html, body { margin:0; padding:0; }
+    body { font-family: "Noto Sans KR", Arial, sans-serif; }
+
+    /* A4 캔버스 */
+    .page {
+      width: 210mm;
+      height: 297mm;
+      position: relative;
+      background-repeat: no-repeat;
+      background-position: center;
+      background-size: cover;
+    }
+
+    /* 공통 텍스트 박스(절대 배치) */
+    .slot {
+      position: absolute;
+      font-size: 10pt;
+      font-weight: 500;
+      color: #000;
+      line-height: 1.2;
+      white-space: pre-line;
+    }
+
+    /* ======== Page 1: 고객정보/인원정보/당일크루즈 ======== */
+    /* 고객정보 섹션 */
+    .p1-name-ko    { top: 15.8%; left: 13.5%; width: 17%; font-size: 9pt; }
+    .p1-name-en    { top: 15.8%; left: 33%; width: 17%; font-size: 9pt; }
+    .p1-email      { top: 15.8%; left: 52.5%; width: 17%; font-size: 9pt; }
+    .p1-nickname   { top: 15.8%; left: 72%; width: 17%; font-size: 9pt; }
+
+    /* 인원정보 섹션 */
+    .p1-adult      { top: 20.8%; left: 54%; width: 8%; text-align: center; font-size: 9pt; }
+    .p1-child      { top: 20.8%; left: 67%; width: 8%; text-align: center; font-size: 9pt; }
+    .p1-toddler    { top: 20.8%; left: 80%; width: 8%; text-align: center; font-size: 9pt; }
+
+    /* 당일 크루즈 섹션 */
+    .p1-cruise1    { top: 29.5%; left: 13.5%; width: 35%; font-size: 9pt; }
+    .p1-boarding-help { top: 29.5%; left: 52.5%; width: 35%; font-size: 9pt; }
+
+    /* 선택 서비스 체크박스 영역 - 실제 체크는 배경에 있으므로 위치만 */
+    .p1-daytour-link { top: 33.5%; left: 40%; width: 8%; text-align: center; font-size: 9pt; }
+    .p1-daytour-time { top: 33.5%; left: 65%; width: 20%; font-size: 9pt; }
+
+    /* ======== Page 2: 숙박형 크루즈 + 객실표 ======== */
+    .p2-cruise1    { top: 8.5%; left: 13.5%; width: 35%; font-size: 9pt; }
+    .p2-schedule   { top: 13.5%; left: 13.5%; width: 35%; font-size: 9pt; }
+    .p2-seat       { top: 18.5%; left: 13.5%; width: 35%; font-size: 9pt; }
+
+    /* 객실 표의 각 행 위치 */
+    .p2-room-name1 { top: 31%; left: 13.5%; width: 25%; font-size: 8pt; }
+    .p2-room-adult1 { top: 31%; left: 40%; width: 8%; text-align: center; font-size: 8pt; }
+    .p2-room-child1 { top: 31%; left: 50%; width: 8%; text-align: center; font-size: 8pt; }
+    .p2-room-pax1 { top: 31%; left: 60%; width: 8%; text-align: center; font-size: 8pt; }
+    .p2-room-price1 { top: 31%; left: 70%; width: 15%; text-align: right; font-size: 8pt; }
+
+    .p2-room-name2 { top: 35%; left: 13.5%; width: 25%; font-size: 8pt; }
+    .p2-room-adult2 { top: 35%; left: 40%; width: 8%; text-align: center; font-size: 8pt; }
+    .p2-room-child2 { top: 35%; left: 50%; width: 8%; text-align: center; font-size: 8pt; }
+    .p2-room-pax2 { top: 35%; left: 60%; width: 8%; text-align: center; font-size: 8pt; }
+    .p2-room-price2 { top: 35%; left: 70%; width: 15%; text-align: right; font-size: 8pt; }
+
+    .p2-room-name3 { top: 39%; left: 13.5%; width: 25%; font-size: 8pt; }
+    .p2-room-adult3 { top: 39%; left: 40%; width: 8%; text-align: center; font-size: 8pt; }
+    .p2-room-child3 { top: 39%; left: 50%; width: 8%; text-align: center; font-size: 8pt; }
+    .p2-room-pax3 { top: 39%; left: 60%; width: 8%; text-align: center; font-size: 8pt; }
+    .p2-room-price3 { top: 39%; left: 70%; width: 15%; text-align: right; font-size: 8pt; }
+
+    .p2-room-name4 { top: 43%; left: 13.5%; width: 25%; font-size: 8pt; }
+    .p2-room-adult4 { top: 43%; left: 40%; width: 8%; text-align: center; font-size: 8pt; }
+    .p2-room-child4 { top: 43%; left: 50%; width: 8%; text-align: center; font-size: 8pt; }
+    .p2-room-pax4 { top: 43%; left: 60%; width: 8%; text-align: center; font-size: 8pt; }
+    .p2-room-price4 { top: 43%; left: 70%; width: 15%; text-align: right; font-size: 8pt; }
+
+    .p2-room-name5 { top: 47%; left: 13.5%; width: 25%; font-size: 8pt; }
+    .p2-room-adult5 { top: 47%; left: 40%; width: 8%; text-align: center; font-size: 8pt; }
+    .p2-room-child5 { top: 47%; left: 50%; width: 8%; text-align: center; font-size: 8pt; }
+    .p2-room-pax5 { top: 47%; left: 60%; width: 8%; text-align: center; font-size: 8pt; }
+    .p2-room-price5 { top: 47%; left: 70%; width: 15%; text-align: right; font-size: 8pt; }
+
+    /* 렌트카 서비스 */
+    .p2-rental-info { top: 55%; left: 13.5%; width: 70%; font-size: 9pt; }
+
+    /* 닌빈 투어 서비스 */
+    .p2-ninbin-info { top: 68%; left: 13.5%; width: 70%; font-size: 9pt; }
+
+    /* 온천 */
+    .p2-spa-info { top: 81%; left: 13.5%; width: 70%; font-size: 9pt; }
+
+    /* ======== Page 3: 공항/기타서비스/결제정보 ======== */
+    .p3-pick-date  { top: 8%; left: 13.5%; width: 18%; font-size: 9pt; }
+    .p3-drop-date  { top: 8%; left: 33%; width: 18%; font-size: 9pt; }
+    .p3-arr-air    { top: 8%; left: 53%; width: 18%; font-size: 9pt; }
+    .p3-dep-air    { top: 8%; left: 73%; width: 18%; font-size: 9pt; }
+
+    .p3-arr-time   { top: 13%; left: 13.5%; width: 18%; font-size: 9pt; }
+    .p3-ride-time  { top: 13%; left: 33%; width: 18%; font-size: 9pt; }
+    .p3-flight     { top: 13%; left: 53%; width: 35%; font-size: 9pt; }
+
+    .p3-pax-pickup { top: 18%; left: 13.5%; width: 18%; font-size: 9pt; }
+    .p3-pax-drop   { top: 18%; left: 33%; width: 18%; font-size: 9pt; }
+    .p3-luggage-pickup { top: 18%; left: 53%; width: 18%; font-size: 9pt; }
+    .p3-luggage-drop { top: 18%; left: 73%; width: 18%; font-size: 9pt; }
+
+    .p3-vehicle-pickup { top: 23%; left: 13.5%; width: 35%; font-size: 9pt; }
+    .p3-vehicle-drop { top: 23%; left: 53%; width: 35%; font-size: 9pt; }
+
+    .p3-place-pickup { top: 28%; left: 13.5%; width: 35%; font-size: 9pt; }
+    .p3-place-drop { top: 28%; left: 53%; width: 35%; font-size: 9pt; }
+
+    /* 결제 정보 */
+    .p3-total-amount { top: 45%; left: 70%; width: 18%; text-align: right; font-size: 10pt; font-weight: bold; }
+    .p3-deposit-amount { top: 50%; left: 70%; width: 18%; text-align: right; font-size: 9pt; }
+    .p3-balance-amount { top: 55%; left: 70%; width: 18%; text-align: right; font-size: 9pt; }
+
+    /* 발급일 */
+    .p3-issued     { top: 95%; left: 24%; width: 60%; font-weight: 500; font-size: 10pt; }
+  </style>
+</head>
+<body>
+
+  <!-- PAGE 1 -->
+  <div class="page" style="background-image:url('/page_1.png')">
+    <div class="slot p1-name-ko"><?= data.한글이름 ?></div>
+    <div class="slot p1-name-en"><?= data.영문이름 ?></div>
+    <div class="slot p1-email"><?= data.Email ?></div>
+    <div class="slot p1-nickname"><?= data.닉네임 ?></div>
+
+    <div class="slot p1-adult"><?= data.총ADULT ?></div>
+    <div class="slot p1-child"><?= data.총CHILD ?></div>
+    <div class="slot p1-toddler"><?= data.총TOODLER ?></div>
+
+    <div class="slot p1-cruise1"><?= data.크루즈1 ?></div>
+    <div class="slot p1-boarding-help"><?= data.승선도움 ?></div>
+
+    <!-- 당일 크루즈 링크/시간 정보 -->
+    <div class="slot p1-daytour-link"><?= data.당일투어링크 ?></div>
+    <div class="slot p1-daytour-time"><?= data.당일투어시간 ?></div>
+  </div>
+
+  <!-- PAGE 2 -->
+  <div class="page" style="background-image:url('/page_2.png')">
+    <div class="slot p2-cruise1"><?= data.크루즈1 ?></div>
+    <div class="slot p2-schedule"><?= data.객실일정1 ?></div>
+    <div class="slot p2-seat"><?= data.자차좌석1 ?></div>
+
+    <!-- 객실 테이블 각 행별로 개별 배치 -->
+    <div class="slot p2-room-name1"><?= data.객실종류1 ?></div>
+    <div class="slot p2-room-adult1"><?= data.ADULT1 ?></div>
+    <div class="slot p2-room-child1"><?= data.CHILD1 ?></div>
+    <div class="slot p2-room-pax1"><?= data.인원수1 ?></div>
+    <div class="slot p2-room-price1"><?= data.객실금액1 ?></div>
+
+    <div class="slot p2-room-name2"><?= data.객실종류2 ?></div>
+    <div class="slot p2-room-adult2"><?= data.ADULT2 ?></div>
+    <div class="slot p2-room-child2"><?= data.CHILD2 ?></div>
+    <div class="slot p2-room-pax2"><?= data.인원수2 ?></div>
+    <div class="slot p2-room-price2"><?= data.객실금액2 ?></div>
+
+    <div class="slot p2-room-name3"><?= data.객실종류3 ?></div>
+    <div class="slot p2-room-adult3"><?= data.ADULT3 ?></div>
+    <div class="slot p2-room-child3"><?= data.CHILD3 ?></div>
+    <div class="slot p2-room-pax3"><?= data.인원수3 ?></div>
+    <div class="slot p2-room-price3"><?= data.객실금액3 ?></div>
+
+    <div class="slot p2-room-name4"><?= data.객실종류4 ?></div>
+    <div class="slot p2-room-adult4"><?= data.ADULT4 ?></div>
+    <div class="slot p2-room-child4"><?= data.CHILD4 ?></div>
+    <div class="slot p2-room-pax4"><?= data.인원수4 ?></div>
+    <div class="slot p2-room-price4"><?= data.객실금액4 ?></div>
+
+    <div class="slot p2-room-name5"><?= data.객실종류5 ?></div>
+    <div class="slot p2-room-adult5"><?= data.ADULT5 ?></div>
+    <div class="slot p2-room-child5"><?= data.CHILD5 ?></div>
+    <div class="slot p2-room-pax5"><?= data.인원수5 ?></div>
+    <div class="slot p2-room-price5"><?= data.객실금액5 ?></div>
+
+    <!-- 렌트카 서비스 정보 -->
+    <div class="slot p2-rental-info"><?= data.렌트카정보 ?></div>
+
+    <!-- 닌빈 투어 정보 -->
+    <div class="slot p2-ninbin-info"><?= data.닌빈투어정보 ?></div>
+
+    <!-- 온천 정보 -->
+    <div class="slot p2-spa-info"><?= data.온천정보 ?></div>
+  </div>
+
+  <!-- PAGE 3 -->
+  <div class="page" style="background-image:url('/page_3.png')">
+    <!-- 공항 서비스 정보 -->
+    <div class="slot p3-pick-date"><?= data.픽업일자 ?></div>
+    <div class="slot p3-drop-date"><?= data.샌딩일자 ?></div>
+    <div class="slot p3-arr-air"><?= data.픽업공항 ?></div>
+    <div class="slot p3-dep-air"><?= data.샌딩공항 ?></div>
+
+    <div class="slot p3-arr-time"><?= data.픽업시간 ?></div>
+    <div class="slot p3-ride-time"><?= data.샌딩시간 ?></div>
+    <div class="slot p3-flight"><?= data.픽업항공 ?></div>
+
+    <div class="slot p3-pax-pickup"><?= data.픽업인원 ?></div>
+    <div class="slot p3-pax-drop"><?= data.샌딩인원 ?></div>
+    <div class="slot p3-luggage-pickup"><?= data.픽업캐리어 ?></div>
+    <div class="slot p3-luggage-drop"><?= data.샌딩캐리어 ?></div>
+
+    <div class="slot p3-vehicle-pickup"><?= data.픽업차종 ?></div>
+    <div class="slot p3-vehicle-drop"><?= data.샌딩차종 ?></div>
+
+    <div class="slot p3-place-pickup"><?= data.픽업장소 ?></div>
+    <div class="slot p3-place-drop"><?= data.샌딩장소 ?></div>
+
+    <!-- 결제 정보 -->
+    <div class="slot p3-total-amount"><?= data.총금액 ?></div>
+    <div class="slot p3-deposit-amount"><?= data.계약금 ?></div>
+    <div class="slot p3-balance-amount"><?= data.잔금 ?></div>
+
+    <!-- 발급일 -->
+    <div class="slot p3-issued">발급일: <?= data.예약일 ?> (베트남 표준시 기준)</div>
+  </div>
+
+</body>
+</html>

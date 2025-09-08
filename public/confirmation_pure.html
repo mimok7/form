@@ -1,0 +1,509 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <title><?= data.한글이름 ?> 예약확인서</title>
+  <style>
+    /* 인쇄 & A4 설정 */
+    @page { size: A4; margin: 10mm; }
+    html, body { margin: 0; padding: 0; }
+    body { 
+      font-family: "Noto Sans KR", "Malgun Gothic", Arial, sans-serif; 
+      font-size: 12px;
+      line-height: 1.4;
+      color: #000;
+    }
+
+    /* A4 페이지 */
+    .page {
+      width: 210mm;
+      min-height: 297mm;
+      box-sizing: border-box;
+      padding: 10mm;
+      position: relative;
+    }
+    .page + .page { page-break-before: always; }
+
+    /* 헤더 */
+    .header {
+      background: linear-gradient(135deg, #4a6fa5 0%, #5a7fb5 100%);
+      color: white;
+      padding: 15px 20px;
+      margin: -10mm -10mm 15px -10mm;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .header h1 {
+      margin: 0;
+      font-size: 18px;
+      font-weight: bold;
+    }
+    .header .subtitle {
+      font-size: 11px;
+      opacity: 0.9;
+    }
+    .header .logo {
+      background: white;
+      color: #4a6fa5;
+      padding: 8px 15px;
+      border-radius: 5px;
+      font-weight: bold;
+      font-size: 14px;
+    }
+
+    /* 섹션 */
+    .section {
+      margin-bottom: 20px;
+      border: 1px solid #ddd;
+      border-radius: 5px;
+      overflow: hidden;
+    }
+    .section-header {
+      background: #f8f9fa;
+      border-bottom: 1px solid #ddd;
+      padding: 8px 15px;
+      font-weight: bold;
+      font-size: 13px;
+      color: #333;
+    }
+    .section-content {
+      padding: 15px;
+    }
+
+    /* 테이블 */
+    .table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 0;
+    }
+    .table th, .table td {
+      border: 1px solid #ddd;
+      padding: 8px;
+      text-align: left;
+      vertical-align: top;
+    }
+    .table th {
+      background: #f8f9fa;
+      font-weight: bold;
+      text-align: center;
+    }
+    .table .center { text-align: center; }
+    .table .right { text-align: right; }
+
+    /* 그리드 레이아웃 */
+    .grid {
+      display: grid;
+      gap: 10px;
+      margin-bottom: 15px;
+    }
+    .grid-2 { grid-template-columns: 1fr 1fr; }
+    .grid-3 { grid-template-columns: 1fr 1fr 1fr; }
+    .grid-4 { grid-template-columns: 1fr 1fr 1fr 1fr; }
+
+    /* 정보 박스 */
+    .info-box {
+      display: flex;
+      flex-direction: column;
+    }
+    .info-label {
+      font-size: 10px;
+      color: #666;
+      margin-bottom: 3px;
+    }
+    .info-value {
+      font-weight: 600;
+      color: #000;
+    }
+
+    /* 체크박스 스타일 */
+    .checkbox-group {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin: 10px 0;
+    }
+    .checkbox-item {
+      display: flex;
+      align-items: center;
+      padding: 5px;
+      border: 1px solid #ddd;
+      border-radius: 3px;
+    }
+    .checkbox-item input[type="checkbox"] {
+      margin-right: 8px;
+    }
+
+    /* 특별한 섹션들 */
+    .highlight-section {
+      background: #fff3cd;
+      border: 1px solid #ffeaa7;
+      border-radius: 5px;
+      padding: 10px;
+      margin: 10px 0;
+    }
+    .highlight-section .title {
+      font-weight: bold;
+      color: #856404;
+      margin-bottom: 5px;
+    }
+
+    .payment-section {
+      background: #e3f2fd;
+      border: 1px solid #90caf9;
+      border-radius: 5px;
+      padding: 15px;
+      margin: 15px 0;
+    }
+
+    /* 하단 정보 */
+    .footer-info {
+      background: #f8f9fa;
+      border: 1px solid #ddd;
+      border-radius: 5px;
+      padding: 10px;
+      margin-top: 20px;
+      font-size: 10px;
+      text-align: center;
+    }
+
+    /* 인쇄 최적화 */
+    @media print {
+      .page { margin: 0; padding: 10mm; }
+      .header { margin: -10mm -10mm 10mm -10mm; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- PAGE 1 -->
+  <div class="page">
+    <div class="header">
+      <div>
+        <h1>투어상품 예약확인서</h1>
+        <div class="subtitle">TOUR PRODUCT RESERVATION CONFIRMATION</div>
+      </div>
+      <div class="logo">스테이하차TRAVEL</div>
+    </div>
+
+    <!-- 고객정보 -->
+    <div class="section">
+      <div class="section-header">고객정보</div>
+      <div class="section-content">
+        <div class="grid grid-4">
+          <div class="info-box">
+            <div class="info-label">고객명(한글)</div>
+            <div class="info-value"><?= data.한글이름 ?></div>
+          </div>
+          <div class="info-box">
+            <div class="info-label">고객명(영문)</div>
+            <div class="info-value"><?= data.영문이름 ?></div>
+          </div>
+          <div class="info-box">
+            <div class="info-label">Email</div>
+            <div class="info-value"><?= data.Email ?></div>
+          </div>
+          <div class="info-box">
+            <div class="info-label">카페 닉네임</div>
+            <div class="info-value"><?= data.닉네임 ?></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 인원정보 -->
+    <div class="section">
+      <div class="section-header">인원정보</div>
+      <div class="section-content">
+        <table class="table">
+          <tr>
+            <th style="width:33%">성인 (ADULT)</th>
+            <th style="width:33%">아동 (CHILD)</th>
+            <th style="width:34%">유아 (TODDLER)</th>
+          </tr>
+          <tr>
+            <td class="center"><?= data.총ADULT ?></td>
+            <td class="center"><?= data.총CHILD ?></td>
+            <td class="center"><?= data.총TOODLER ?></td>
+          </tr>
+        </table>
+        <div style="margin-top: 10px; font-size: 10px; color: #666;">
+          ※ 만 2세 이하(유아) / 만 3-11세(아동) / 만 12세 이상(성인)
+        </div>
+      </div>
+    </div>
+
+    <!-- 당일 크루즈 -->
+    <div class="section">
+      <div class="section-header" style="background: #ffe0b3;">당일 크루즈 서비스</div>
+      <div class="section-content">
+        <div class="grid grid-2">
+          <div class="info-box">
+            <div class="info-label">당일 크루즈 상품</div>
+            <div class="info-value"><?= data.크루즈1 ?></div>
+          </div>
+          <div class="info-box">
+            <div class="info-label">승선 도움 서비스</div>
+            <div class="info-value"><?= data.승선도움 ?></div>
+          </div>
+        </div>
+        
+        <div class="checkbox-group" style="margin-top: 15px;">
+          <div class="checkbox-item">
+            <input type="checkbox" <?= data.당일투어링크 ? 'checked' : '' ?>>
+            <span>당일 크루즈 상품 링크</span>
+          </div>
+          <div class="checkbox-item">
+            <input type="checkbox">
+            <span>기타 서비스</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 선택 서비스 -->
+    <div class="highlight-section">
+      <div class="title">선택 서비스 안내</div>
+      <div class="checkbox-group">
+        <div class="checkbox-item"><input type="checkbox"> 하롱베이 크루즈</div>
+        <div class="checkbox-item"><input type="checkbox"> 공항 픽업/샌딩</div>
+        <div class="checkbox-item"><input type="checkbox"> 마사지 서비스</div>
+        <div class="checkbox-item"><input type="checkbox"> 닌빈 투어</div>
+        <div class="checkbox-item"><input type="checkbox"> 렌터카 서비스</div>
+        <div class="checkbox-item"><input type="checkbox"> 기타 서비스</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- PAGE 2 -->
+  <div class="page">
+    <div class="header">
+      <div>
+        <h1>숙박형 크루즈 / 기타 서비스</h1>
+        <div class="subtitle">CRUISE & ADDITIONAL SERVICES</div>
+      </div>
+      <div class="logo">스테이하차TRAVEL</div>
+    </div>
+
+    <!-- 숙박형 크루즈 -->
+    <div class="section">
+      <div class="section-header" style="background: #ffcdd2;">숙박형 크루즈 정보</div>
+      <div class="section-content">
+        <div class="grid grid-3">
+          <div class="info-box">
+            <div class="info-label">크루즈명</div>
+            <div class="info-value"><?= data.크루즈1 ?></div>
+          </div>
+          <div class="info-box">
+            <div class="info-label">일정</div>
+            <div class="info-value"><?= data.객실일정1 ?></div>
+          </div>
+          <div class="info-box">
+            <div class="info-label">좌석번호</div>
+            <div class="info-value"><?= data.자차좌석1 ?></div>
+          </div>
+        </div>
+
+        <table class="table" style="margin-top: 15px;">
+          <tr>
+            <th style="width:35%">객실명</th>
+            <th style="width:13%">성인</th>
+            <th style="width:13%">아동</th>
+            <th style="width:13%">인원수</th>
+            <th style="width:26%">객실금액(VND)</th>
+          </tr>
+          <tr>
+            <td><?= data.객실종류1 ?></td>
+            <td class="center"><?= data.ADULT1 ?></td>
+            <td class="center"><?= data.CHILD1 ?></td>
+            <td class="center"><?= data.인원수1 ?></td>
+            <td class="right"><?= data.객실금액1 ?></td>
+          </tr>
+          <tr>
+            <td><?= data.객실종류2 ?></td>
+            <td class="center"><?= data.ADULT2 ?></td>
+            <td class="center"><?= data.CHILD2 ?></td>
+            <td class="center"><?= data.인원수2 ?></td>
+            <td class="right"><?= data.객실금액2 ?></td>
+          </tr>
+          <tr>
+            <td><?= data.객실종류3 ?></td>
+            <td class="center"><?= data.ADULT3 ?></td>
+            <td class="center"><?= data.CHILD3 ?></td>
+            <td class="center"><?= data.인원수3 ?></td>
+            <td class="right"><?= data.객실금액3 ?></td>
+          </tr>
+          <tr>
+            <td><?= data.객실종류4 ?></td>
+            <td class="center"><?= data.ADULT4 ?></td>
+            <td class="center"><?= data.CHILD4 ?></td>
+            <td class="center"><?= data.인원수4 ?></td>
+            <td class="right"><?= data.객실금액4 ?></td>
+          </tr>
+          <tr>
+            <td><?= data.객실종류5 ?></td>
+            <td class="center"><?= data.ADULT5 ?></td>
+            <td class="center"><?= data.CHILD5 ?></td>
+            <td class="center"><?= data.인원수5 ?></td>
+            <td class="right"><?= data.객실금액5 ?></td>
+          </tr>
+        </table>
+      </div>
+    </div>
+
+    <!-- 렌트카 서비스 -->
+    <div class="section">
+      <div class="section-header" style="background: #c8e6c9;">렌트카 서비스</div>
+      <div class="section-content">
+        <div class="info-box">
+          <div class="info-label">렌트카 정보</div>
+          <div class="info-value"><?= data.렌트카정보 ?></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 닌빈 투어 서비스 -->
+    <div class="section">
+      <div class="section-header" style="background: #ffecb3;">닌빈 투어 서비스</div>
+      <div class="section-content">
+        <div class="info-box">
+          <div class="info-label">닌빈 투어 정보</div>
+          <div class="info-value"><?= data.닌빈투어정보 ?></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 온천 -->
+    <div class="section">
+      <div class="section-header" style="background: #f3e5f5;">온천 서비스</div>
+      <div class="section-content">
+        <div class="info-box">
+          <div class="info-label">온천 정보</div>
+          <div class="info-value"><?= data.온천정보 ?></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- PAGE 3 -->
+  <div class="page">
+    <div class="header">
+      <div>
+        <h1>공항 서비스 / 결제 정보</h1>
+        <div class="subtitle">AIRPORT SERVICE & PAYMENT DETAILS</div>
+      </div>
+      <div class="logo">스테이하차TRAVEL</div>
+    </div>
+
+    <!-- 공항 서비스 -->
+    <div class="section">
+      <div class="section-header" style="background: #e1f5fe;">공항 픽업/샌딩 서비스</div>
+      <div class="section-content">
+        <div class="grid grid-4">
+          <div class="info-box">
+            <div class="info-label">픽업일자</div>
+            <div class="info-value"><?= data.픽업일자 ?></div>
+          </div>
+          <div class="info-box">
+            <div class="info-label">샌딩일자</div>
+            <div class="info-value"><?= data.샌딩일자 ?></div>
+          </div>
+          <div class="info-box">
+            <div class="info-label">도착공항</div>
+            <div class="info-value"><?= data.픽업공항 ?></div>
+          </div>
+          <div class="info-box">
+            <div class="info-label">출국공항</div>
+            <div class="info-value"><?= data.샌딩공항 ?></div>
+          </div>
+        </div>
+
+        <div class="grid grid-3" style="margin-top: 10px;">
+          <div class="info-box">
+            <div class="info-label">도착시간</div>
+            <div class="info-value"><?= data.픽업시간 ?></div>
+          </div>
+          <div class="info-box">
+            <div class="info-label">승차시간</div>
+            <div class="info-value"><?= data.샌딩시간 ?></div>
+          </div>
+          <div class="info-box">
+            <div class="info-label">항공편명</div>
+            <div class="info-value"><?= data.픽업항공 ?></div>
+          </div>
+        </div>
+
+        <table class="table" style="margin-top: 15px;">
+          <tr>
+            <th>구분</th>
+            <th>픽업</th>
+            <th>샌딩</th>
+          </tr>
+          <tr>
+            <td>승차인원</td>
+            <td class="center"><?= data.픽업인원 ?></td>
+            <td class="center"><?= data.샌딩인원 ?></td>
+          </tr>
+          <tr>
+            <td>캐리어</td>
+            <td class="center"><?= data.픽업캐리어 ?></td>
+            <td class="center"><?= data.샌딩캐리어 ?></td>
+          </tr>
+          <tr>
+            <td>차량</td>
+            <td><?= data.픽업차종 ?></td>
+            <td><?= data.샌딩차종 ?></td>
+          </tr>
+          <tr>
+            <td>장소</td>
+            <td><?= data.픽업장소 ?></td>
+            <td><?= data.샌딩장소 ?></td>
+          </tr>
+        </table>
+      </div>
+    </div>
+
+    <!-- 결제 정보 -->
+    <div class="payment-section">
+      <h3 style="margin: 0 0 15px 0; color: #1976d2;">결제 정보</h3>
+      <table class="table">
+        <tr>
+          <th style="width: 30%">구분</th>
+          <th style="width: 35%">금액 (VND)</th>
+          <th style="width: 35%">금액 (USD)</th>
+        </tr>
+        <tr>
+          <td>총 금액</td>
+          <td class="right"><?= data.총금액 ?></td>
+          <td class="right">-</td>
+        </tr>
+        <tr>
+          <td>계약금</td>
+          <td class="right"><?= data.계약금 ?></td>
+          <td class="right">-</td>
+        </tr>
+        <tr>
+          <td>잔금</td>
+          <td class="right"><?= data.잔금 ?></td>
+          <td class="right">-</td>
+        </tr>
+      </table>
+    </div>
+
+    <!-- 하단 정보 -->
+    <div class="footer-info">
+      <div style="margin-bottom: 10px;">
+        <strong>발급일: <?= data.예약일 ?> (베트남 표준시 기준)</strong>
+      </div>
+      <div style="border-top: 1px solid #ddd; padding-top: 10px;">
+        <div><strong>TENDER Communications</strong> | <strong>STAY HAULING TRAVEL</strong></div>
+        <div>Vietnam | stay@tender.com.vn | 070-4548-5168</div>
+        <div style="margin-top: 5px; color: #666;">
+          본 예약확인서는 여행약관에 따라 발급되었으며, 베트남 현지 법률을 준수합니다.
+        </div>
+      </div>
+    </div>
+  </div>
+
+</body>
+</html>

@@ -1,0 +1,180 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <title><?= data.한글이름 ?> 숙박형 크루즈 예약확인서</title>
+  <style>
+    @page { size: A4; margin: 10mm; }
+    html, body { margin: 0; padding: 0; }
+    body { font-family: "Noto Sans KR","Malgun Gothic",Arial,sans-serif; font-size: 12px; line-height: 1.45; color:#000; }
+    .page { width:210mm; min-height:297mm; box-sizing:border-box; padding:10mm; position:relative; }
+    .page + .page { page-break-before: always; }
+    .header { background:#234b7c; color:#fff; margin:-10mm -10mm 12mm -10mm; padding:14px 18px; display:flex; justify-content:space-between; align-items:center; }
+    .header h1 { margin:0; font-size:18px; }
+    .header .sub { font-size:11px; opacity:.9 }
+    .logo { background:#fff; color:#234b7c; border-radius:4px; padding:6px 10px; font-weight:700; }
+    .section { border:1px solid #ddd; border-radius:6px; overflow:hidden; margin-bottom:14px; }
+    .section-h { background:#f6f8fa; padding:8px 12px; font-weight:700; color:#333; font-size:13px; border-bottom:1px solid #ddd; }
+    .section-b { padding:12px; }
+    .grid { display:grid; gap:10px; }
+    .g-2 { grid-template-columns:1fr 1fr; }
+    .g-3 { grid-template-columns:1fr 1fr 1fr; }
+    .g-4 { grid-template-columns:1fr 1fr 1fr 1fr; }
+    .ibox { display:flex; flex-direction:column; }
+    .ilabel { font-size:10px; color:#666; margin-bottom:3px; }
+    .ivalue { font-weight:600; color:#000; }
+    table { width:100%; border-collapse:collapse; }
+    th,td { border:1px solid #e5e7eb; padding:8px; }
+    th { background:#f6f8fa; font-weight:700; text-align:center; }
+    td.right { text-align:right; }
+    td.center { text-align:center; }
+    .note { font-size:10px; color:#666; margin-top:6px; }
+  </style>
+</head>
+<body>
+
+  <!-- PAGE 1: 기본정보 + 숙박형 크루즈 -->
+  <div class="page">
+    <div class="header">
+      <div>
+        <h1>숙박형 크루즈 예약확인서</h1>
+        <div class="sub">CRUISE STAY RESERVATION CONFIRMATION</div>
+      </div>
+      <div class="logo">STAY HAULING TRAVEL</div>
+    </div>
+
+    <div class="section">
+      <div class="section-h">고객정보</div>
+      <div class="section-b">
+        <div class="grid g-4">
+          <div class="ibox"><div class="ilabel">고객명(한글)</div><div class="ivalue"><?= data.한글이름 ?></div></div>
+          <div class="ibox"><div class="ilabel">고객명(영문)</div><div class="ivalue"><?= data.영문이름 ?></div></div>
+          <div class="ibox"><div class="ilabel">Email</div><div class="ivalue"><?= data.Email ?></div></div>
+          <div class="ibox"><div class="ilabel">닉네임</div><div class="ivalue"><?= data.닉네임 ?></div></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-h" style="background:#ffe6cc;">숙박형 크루즈 정보</div>
+      <div class="section-b">
+        <div class="grid g-3" style="margin-bottom:10px;">
+          <div class="ibox"><div class="ilabel">크루즈명</div><div class="ivalue"><?= data.크루즈1 ?></div></div>
+          <div class="ibox"><div class="ilabel">일정</div><div class="ivalue"><?= data.객실일정1 ?></div></div>
+          <div class="ibox"><div class="ilabel">좌석/객실번호</div><div class="ivalue"><?= data.자차좌석1 ?></div></div>
+        </div>
+        <table>
+          <tr>
+            <th style="width:35%">객실명</th>
+            <th style="width:13%">성인</th>
+            <th style="width:13%">아동</th>
+            <th style="width:13%">인원수</th>
+            <th style="width:26%">객실금액(VND)</th>
+          </tr>
+          <tr><td><?= data.객실종류1 ?></td><td class="center"><?= data.ADULT1 ?></td><td class="center"><?= data.CHILD1 ?></td><td class="center"><?= data.인원수1 ?></td><td class="right"><?= data.객실금액1 ?></td></tr>
+          <tr><td><?= data.객실종류2 ?></td><td class="center"><?= data.ADULT2 ?></td><td class="center"><?= data.CHILD2 ?></td><td class="center"><?= data.인원수2 ?></td><td class="right"><?= data.객실금액2 ?></td></tr>
+          <tr><td><?= data.객실종류3 ?></td><td class="center"><?= data.ADULT3 ?></td><td class="center"><?= data.CHILD3 ?></td><td class="center"><?= data.인원수3 ?></td><td class="right"><?= data.객실금액3 ?></td></tr>
+          <tr><td><?= data.객실종류4 ?></td><td class="center"><?= data.ADULT4 ?></td><td class="center"><?= data.CHILD4 ?></td><td class="center"><?= data.인원수4 ?></td><td class="right"><?= data.객실금액4 ?></td></tr>
+          <tr><td><?= data.객실종류5 ?></td><td class="center"><?= data.ADULT5 ?></td><td class="center"><?= data.CHILD5 ?></td><td class="center"><?= data.인원수5 ?></td><td class="right"><?= data.객실금액5 ?></td></tr>
+        </table>
+        <div class="note">성인/아동/유아 기준은 운영정책에 따릅니다.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- PAGE 2: 공항 서비스 -->
+  <div class="page">
+    <div class="header">
+      <div>
+        <h1>공항 서비스</h1>
+        <div class="sub">AIRPORT PICKUP / DROP</div>
+      </div>
+      <div class="logo">STAY HAULING TRAVEL</div>
+    </div>
+    <div class="section">
+      <div class="section-h" style="background:#e1f5fe;">공항 픽업/샌딩</div>
+      <div class="section-b">
+        <div class="grid g-4">
+          <div class="ibox"><div class="ilabel">픽업일자</div><div class="ivalue"><?= data.픽업일자 ?></div></div>
+          <div class="ibox"><div class="ilabel">샌딩일자</div><div class="ivalue"><?= data.샌딩일자 ?></div></div>
+          <div class="ibox"><div class="ilabel">도착공항</div><div class="ivalue"><?= data.픽업공항 ?></div></div>
+          <div class="ibox"><div class="ilabel">출국공항</div><div class="ivalue"><?= data.샌딩공항 ?></div></div>
+        </div>
+        <div class="grid g-3" style="margin-top:10px;">
+          <div class="ibox"><div class="ilabel">도착시간</div><div class="ivalue"><?= data.픽업시간 ?></div></div>
+          <div class="ibox"><div class="ilabel">승차시간</div><div class="ivalue"><?= data.샌딩시간 ?></div></div>
+          <div class="ibox"><div class="ilabel">항공편명</div><div class="ivalue"><?= data.픽업항공 ?></div></div>
+        </div>
+        <table style="margin-top:10px;">
+          <tr><th>구분</th><th>픽업</th><th>샌딩</th></tr>
+          <tr><td>승차인원</td><td class="center"><?= data.픽업인원 ?></td><td class="center"><?= data.샌딩인원 ?></td></tr>
+          <tr><td>캐리어</td><td class="center"><?= data.픽업캐리어 ?></td><td class="center"><?= data.샌딩캐리어 ?></td></tr>
+          <tr><td>차량</td><td><?= data.픽업차종 ?></td><td><?= data.샌딩차종 ?></td></tr>
+          <tr><td>장소</td><td><?= data.픽업장소 ?></td><td><?= data.샌딩장소 ?></td></tr>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- PAGE 3: 렌트카 / 투어 서비스 -->
+  <div class="page">
+    <div class="header">
+      <div>
+        <h1>렌트카 / 투어 서비스</h1>
+        <div class="sub">RENTAL CAR & TOURS</div>
+      </div>
+      <div class="logo">STAY HAULING TRAVEL</div>
+    </div>
+    <div class="section">
+      <div class="section-h" style="background:#c8e6c9;">렌트카 서비스</div>
+      <div class="section-b">
+        <div class="ibox"><div class="ilabel">렌트카 정보</div><div class="ivalue"><?= data.렌트카정보 ?></div></div>
+      </div>
+    </div>
+    <div class="section">
+      <div class="section-h" style="background:#fff8e1;">투어 서비스</div>
+      <div class="section-b">
+        <div class="grid g-2">
+          <div class="ibox"><div class="ilabel">당일 투어 링크</div><div class="ivalue"><?= data.당일투어링크 ?></div></div>
+          <div class="ibox"><div class="ilabel">당일 투어 시간</div><div class="ivalue"><?= data.당일투어시간 ?></div></div>
+        </div>
+        <div class="grid g-2" style="margin-top:10px;">
+          <div class="ibox"><div class="ilabel">닌빈 투어 정보</div><div class="ivalue"><?= data.닌빈투어정보 ?></div></div>
+          <div class="ibox"><div class="ilabel">온천 정보</div><div class="ivalue"><?= data.온천정보 ?></div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- PAGE 4: 결제정보 + 데이터 매핑 전체표 -->
+  <div class="page">
+    <div class="header">
+      <div>
+        <h1>결제 정보 및 데이터 매핑</h1>
+        <div class="sub">PAYMENT & DATA MAPPING</div>
+      </div>
+      <div class="logo">STAY HAULING TRAVEL</div>
+    </div>
+    <div class="section">
+      <div class="section-h" style="background:#e3f2fd;">결제 정보</div>
+      <div class="section-b">
+        <table>
+          <tr><th style="width:30%">구분</th><th style="width:35%">금액 (VND)</th><th style="width:35%">비고</th></tr>
+          <tr><td>총 금액</td><td class="right"><?= data.총금액 ?></td><td></td></tr>
+          <tr><td>계약금</td><td class="right"><?= data.계약금 ?></td><td></td></tr>
+          <tr><td>잔금</td><td class="right"><?= data.잔금 ?></td><td></td></tr>
+        </table>
+        <div class="note">발급일: <?= data.예약일 ?> (베트남 표준시 기준)</div>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-h">데이터 매핑 전체표</div>
+      <div class="section-b">
+        <?= data.__MAPPING_HTML ?>
+      </div>
+    </div>
+  </div>
+
+</body>
+</html>

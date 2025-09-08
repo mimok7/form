@@ -1,0 +1,346 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>투어상품 예약확인서</title>
+  <style>
+    :root{ 
+      --primary: #93c5fd; 
+      --primary-light: #f0f9ff; 
+      --secondary: #86efac; 
+      --accent: #fbbf24; 
+      --gray-50: #f9fafb; 
+      --gray-100: #f3f4f6; 
+      --gray-200: #e5e7eb; 
+      --gray-600: #6b7280; 
+      --gray-800: #374151; 
+      --gray-900: #1f2937;
+    }
+    *{ box-sizing: border-box; }
+  body{ margin:0; font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; color:#000 !important; line-height:1.5; }
+    .page{ max-width: 800px; margin: 0 auto; padding: 20px; background: #fff; }
+    
+    .header{ 
+      background: linear-gradient(135deg, var(--primary) 0%, #7dd3fc 100%); 
+      color: #000 !important; 
+      padding: 24px; 
+      border-radius: 12px; 
+      margin-bottom: 24px;
+      box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+    }
+    .header-title{ font-size: 28px; font-weight: 800; margin: 0; color: #000 !important; }
+    .header-subtitle{ font-size: 14px; opacity: 0.9; margin: 4px 0 0 0; color: #000 !important; }
+    .reservation-date{ 
+      background: rgba(255,255,255,0.2); 
+      padding: 8px 16px; 
+      border-radius: 20px; 
+      font-size: 14px; 
+      font-weight: 600;
+      margin-top: 12px;
+      display: inline-block;
+      color: #000 !important;
+    }
+    
+    .customer-info{ 
+      background: var(--gray-50); 
+      border: 1px solid var(--gray-200); 
+      border-radius: 8px; 
+      overflow: hidden; 
+      margin-bottom: 24px;
+    }
+    .info-header{ 
+      background: var(--primary-light); 
+      padding: 12px 16px; 
+      font-weight: 700; 
+      color: #000 !important; 
+      border-bottom: 1px solid var(--gray-200);
+    }
+    .info-grid{ 
+      display: grid; 
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); 
+      gap: 16px; 
+      padding: 16px; 
+    }
+    .info-item{ display: flex; flex-direction: column; }
+    .info-label{ font-size: 12px; color: var(--gray-600); margin-bottom: 4px; font-weight: 600; }
+    .info-value{ font-weight: 600; color: var(--gray-900); }
+    
+    .service-section{ margin-bottom: 24px; }
+    .section-header{ 
+      background: #d1fae5; 
+      color: #000 !important; 
+      padding: 12px 16px; 
+      border-radius: 8px 8px 0 0; 
+      font-weight: 700; 
+      font-size: 16px;
+      display: flex;
+      align-items: center;
+    }
+    .section-icon{ margin-right: 8px; font-size: 18px; }
+    .section-content{ 
+      border: 1px solid var(--gray-200); 
+      border-top: none; 
+      border-radius: 0 0 8px 8px; 
+      overflow: hidden;
+    }
+    
+    .svc-4col{ 
+      display: grid; 
+      grid-template-columns: auto 1fr auto 1fr; 
+      gap: 1px; 
+      background: var(--gray-200);
+      align-items: stretch;
+    }
+    .svc-cell-label, .svc-cell-value, .svc-hr{
+      background: white; 
+      padding: 12px; 
+    }
+    .svc-cell-label{ 
+      font-size: 14px; 
+      color: var(--gray-600); 
+      font-weight: 700; 
+      background: var(--gray-100);
+      padding-top: 14px;
+      padding-bottom: 14px;
+    }
+    .svc-cell-value{ 
+      font-weight: 700; 
+      color: var(--gray-900); 
+      font-size: 15px;
+      padding-top: 14px;
+      padding-bottom: 14px;
+    }
+    .svc-4col-header{ 
+      background: var(--gray-100); 
+      font-weight: 700; 
+      text-align: center; 
+      color: var(--gray-800);
+      padding: 12px;
+    }
+    
+    .price-section{ 
+      background: #fef7ff; 
+      border: 2px solid #e879f9; 
+      border-radius: 12px; 
+      padding: 20px; 
+      margin-top: 24px;
+    }
+    .price-header{ 
+      background: linear-gradient(135deg, var(--primary-light) 0%, #ffffff 100%); 
+      color: #000 !important; 
+      padding: 12px 16px; 
+      border-radius: 8px; 
+      font-weight: 700; 
+      font-size: 18px;
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+    }
+    .price-grid{ 
+      display: grid; 
+      grid-template-columns: auto 1fr auto 1fr; 
+      gap: 1px; 
+      background: var(--gray-200);
+      border-radius: 8px;
+      overflow: hidden;
+    }
+  .price-table{ width:100%; border-collapse: collapse; margin-top:8px; }
+  .price-table th, .price-table td{ border: 1px solid var(--gray-200); padding: 10px; }
+  .price-table thead th{ background: var(--gray-100); font-weight:700; }
+  .price-table thead th{ text-align: center !important; }
+  .price-table .price-total{ /* removed yellow background */ font-weight:800; background: transparent; }
+  .price-table tfoot td{ /* removed yellow background */ font-weight:800; border-top: 2px solid var(--gray-200); background: transparent; }
+  .price-table tfoot td:last-child { text-align: right; }
+  .price-table tfoot td[colspan="3"], .price-table tfoot td.price-total { text-align: right; }
+    .price-label-cell, .price-value-cell{ 
+      background: white; 
+      padding: 12px; 
+    }
+    .price-label-cell{ 
+      font-size: 14px; 
+      color: var(--gray-600); 
+      font-weight: 700; 
+      background: var(--gray-100);
+      padding-top: 14px;
+      padding-bottom: 14px;
+    }
+    .price-value-cell{ 
+      font-weight: 700; 
+      color: var(--gray-900); 
+      font-size: 16px;
+      padding-top: 12px;
+      padding-bottom: 12px;
+    }
+    .price-label{ 
+      font-size: 12px; 
+      color: var(--gray-600); 
+      margin-bottom: 4px; 
+      font-weight: 600; 
+    }
+    .price-value{ 
+      font-weight: 700; 
+      color: var(--gray-900); 
+      font-size: 16px;
+    }
+    .price-total{ 
+      /* simplified total styling: no yellow background */
+      background: transparent !important; 
+      border: 1px solid var(--gray-200) !important;
+    }
+    .price-total .price-value{ 
+      color: #000 !important; 
+      font-size: 18px;
+    }
+    
+    .merged-row{ background: var(--primary-light) !important; }
+    .merged-indicator{ 
+      color: var(--primary); 
+      font-weight: 600; 
+      font-size: 12px; 
+      padding: 2px 6px; 
+      background: white; 
+      border-radius: 4px; 
+      margin-left: 8px;
+    }
+    
+    .empty-state{ 
+      padding: 32px; 
+      text-align: center; 
+      color: var(--gray-600); 
+      font-style: italic;
+      background: var(--gray-50);
+    }
+    
+    .footer-notes{ 
+      background: var(--gray-50); 
+      padding: 16px; 
+      border-radius: 8px; 
+      margin-top: 24px; 
+      border-left: 4px solid var(--accent);
+    }
+    .footer-notes h4{ margin: 0 0 8px 0; color: var(--gray-800); }
+    .footer-notes ul{ margin: 0; padding-left: 16px; }
+    .footer-notes li{ margin-bottom: 4px; color: var(--gray-600); }
+
+  /* cancellation / provider blocks */
+  .cancel-section{ margin-top:18px; border:1px solid var(--gray-200); border-radius:8px; overflow:hidden; }
+  .cancel-header{ background:#fee2e2; color:#7f1d1d; padding:10px 14px; font-weight:800; }
+  .cancel-table{ width:100%; border-collapse:collapse; }
+  .cancel-table th, .cancel-table td{ border:1px solid var(--gray-200); padding:10px; font-size:13px; }
+  .cancel-table thead th{ background:#fef2f2; font-weight:800; }
+  .provider-block{ margin-top:14px; border:1px solid var(--gray-200); border-radius:8px; overflow:hidden; }
+  .provider-grid{ display:grid; grid-template-columns: 1fr 1fr 1fr; gap:8px; padding:12px; background:#fff; }
+  .provider-item{ background:var(--gray-50); padding:8px 10px; border-radius:6px; }
+  .provider-item h5{ margin:0 0 6px 0; font-size:13px; font-weight:800; }
+  .provider-item p{ margin:0; font-size:13px; color:var(--gray-700); }
+    
+    @media print { 
+      body{ background: #fff; } 
+      .page{ box-shadow: none; max-width: none; }
+      .header{ box-shadow: none; }
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <!-- 헤더 -->
+    <div class="header">
+      <div>
+        <h1 class="header-title">🌊 투어상품 예약확인서</h1>
+        <p class="header-subtitle">여행의 모든 순간이 특별한 추억이 되기를 바랍니다</p>
+      </div>
+      <div class="reservation-date">📅 예약일: {{ RESERVED_AT }}</div>
+    </div>
+
+    <!-- 고객 정보 -->
+    <div class="customer-info">
+      <div class="info-header">👤 고객 정보</div>
+      <div class="svc-4col">
+        <div class="svc-cell-label">주문번호</div><div class="svc-cell-value">{{ ORDER_ID }}</div>
+        <div class="svc-cell-label">고객명(한글)</div><div class="svc-cell-value">{{ CUST_NAME_KO }}</div>
+        <div class="svc-cell-label">고객명(영문)</div><div class="svc-cell-value">{{ CUST_NAME_EN }}</div>
+        <div class="svc-cell-label">이메일</div><div class="svc-cell-value">{{ CUST_EMAIL }}</div>
+        <div class="svc-cell-label">연락처</div><div class="svc-cell-value">{{ CUST_PHONE }}</div>
+        <div class="svc-cell-label">카카오톡</div><div class="svc-cell-value">{{ CUST_KAKAO }}</div>
+      </div>
+    </div>
+
+  {{ CRUISE_SECTION }}
+
+  {{ HOTEL_SECTION }}
+
+  {{ AIRPORT_SECTION }}
+
+  {{ RENTAL_SECTION }}
+
+  {{ TOUR_SECTION }}
+
+    <!-- 가격 정보 -->
+    <div class="price-section">
+      <div class="price-header">
+        <span class="section-icon">💰</span>
+        가격 정보
+      </div>
+      {{ PRICE_ROWS }}
+    </div>
+
+    <!-- 안내사항 -->
+    <!-- 안내사항 -->
+    <div class="cancel-section">
+      <div class="cancel-header">❌ 상품취소/환불규정</div>
+      <table class="cancel-table">
+        <thead>
+          <tr><th>상품명</th><th>취소수수료(출발일 기준)</th><th>비고</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>무료취소 (수수료 0%)</td><td>출발일 31일 전 취소</td><td>전액 환불</td></tr>
+          <tr><td>취소 수수료 15% 발생</td><td>출발일 21~30일 전 취소</td><td>수수료 15%</td></tr>
+          <tr><td>취소 수수료 50% 발생</td><td>출발일 8~20일 전 취소</td><td>수수료 50%</td></tr>
+          <tr><td>취소불가(환불불가)</td><td>출발일 7일 이내 취소</td><td>환불 불가</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="provider-block">
+      <div style="padding:12px; background:var(--gray-100); font-weight:700;">서비스 제공자 정보</div>
+      <div class="provider-grid">
+        <div class="provider-item">
+          <h5>회사명</h5>
+          <p>TENPER Communications</p>
+        </div>
+        <div class="provider-item">
+          <h5>서비스 브랜드</h5>
+          <p>STAY HONG TRAVEL</p>
+        </div>
+        <div class="provider-item">
+          <h5>대표 연락처</h5>
+          <p>070-4454-5158</p>
+        </div>
+        <div class="provider-item">
+          <h5>대표 이메일</h5>
+          <p>stayhong@naver.com</p>
+        </div>
+        <div class="provider-item">
+          <h5>주소 / 국가</h5>
+          <p>VIETNAM</p>
+        </div>
+        <div class="provider-item">
+          <h5>기타</h5>
+          <p>ONE PAY 결제 연동</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="footer-notes">
+      <h4>📋 안내사항</h4>
+      <ul>
+        <li>모든 서비스는 현지 사정에 따라 일정 및 내용이 변경될 수 있습니다.</li>
+        <li>본 문서는 고객 확인용으로 발송되며, 상세 변경은 담당자와 상의해 주세요.</li>
+        <li>체크인/체크아웃 시간은 호텔 정책에 따라 조정될 수 있습니다.</li>
+        <li>날씨나 안전상의 이유로 일부 투어가 취소될 수 있습니다.</li>
+      </ul>
+    </div>
+  </div>
+</body>
+</html>
