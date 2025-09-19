@@ -17,7 +17,7 @@ function Header() {
   return (
     <header className="app-header" aria-label="홈으로 이동">
       <div className="header-inner">
-        <a href="/" style={{ display: 'flex', alignItems: 'center', textDecoration: 'none', color: 'inherit' }}>
+        <a href="/admin" style={{ display: 'flex', alignItems: 'center', textDecoration: 'none', color: 'inherit' }}>
           <img src="/logo.png" alt="스테이 하롱 트레블" className="logo" />
           <h1 className="brand">스테이 하롱 예약폼</h1>
         </a>
@@ -37,10 +37,10 @@ function App() {
 
           <main className="app-main">
             <Routes>
-              {/* 모바일 예약폼이 기본 루트 */}
+              {/* 기본 경로를 /admin으로 리다이렉트 */}
               <Route
                 path="/"
-                element={<GoogleSheetInput formData={formData} setFormData={setFormData} />}
+                element={<Navigate to="/admin" replace />}
               />
               {/* 관리자 대시보드 메인 */}
               <Route
@@ -80,8 +80,8 @@ function App() {
                 path="/admin/notice"
                 element={<Notice />}
               />
-              {/* 다른 모든 경로를 루트로 리다이렉트 */}
-              <Route path="*" element={<Navigate to="/" replace />} />
+              {/* 다른 모든 경로를 /admin으로 리다이렉트 */}
+              <Route path="*" element={<Navigate to="/admin" replace />} />
             </Routes>
           </main>
         </div>
