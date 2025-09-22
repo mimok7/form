@@ -497,19 +497,35 @@ function ReportSHCC({ onBack }) {
   };
 
   const handlePrint = () => {
-    const printHTML = generatePrintHTML();
-    if (!printHTML) {
+    if (!selectedDate || groupedByVehicle.length === 0) {
       alert(language === 'vi' ? 'Vui lòng chọn ngày.' : '날짜를 선택해주세요.');
       return;
     }
 
-    const printWindow = window.open('', '_blank');
-    printWindow.document.write(printHTML);
-    printWindow.document.close();
-    printWindow.focus();
+    // 미리보기가 꺼져있으면 임시로 켜기
+    const wasPreviewOff = !showPreview;
+    if (wasPreviewOff) {
+      setShowPreview(true);
+    }
+
+    // 잠시 기다린 후 인쇄 (미리보기 렌더링 완료를 위해)
     setTimeout(() => {
-      printWindow.print();
-    }, 500);
+      // 현재 페이지에서 미리보기 영역만 인쇄
+      const printContent = document.querySelector('.print-preview-area');
+      if (printContent) {
+        const originalContents = document.body.innerHTML;
+        const printContents = printContent.innerHTML;
+        
+        document.body.innerHTML = printContents;
+        window.print();
+        document.body.innerHTML = originalContents;
+        
+        // 미리보기가 원래 꺼져있었다면 다시 끄기
+        if (wasPreviewOff) {
+          setShowPreview(false);
+        }
+      }
+    }, 100);
   };
 
   // 사용 가능한 날짜 목록
@@ -671,6 +687,7 @@ function ReportSHCC({ onBack }) {
       {/* 미리보기 */}
       {showPreview && selectedDate && (
         <div 
+          className="print-preview-area"
           style={{ border: '1px solid #ddd', borderRadius: '8px', overflow: 'hidden' }}
           dangerouslySetInnerHTML={{ __html: generatePrintHTML() }}
         />

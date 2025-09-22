@@ -194,15 +194,16 @@ function AdminDashboard() {
       <div className="dashboard-layout" style={{ display: 'flex', height: 'calc(100vh - 80px)' }}>
         {/* 사이드바 */}
         <div className="sidebar" style={{ 
-          width: '120px', 
+          width: '220px', 
+          minWidth: '180px',
           backgroundColor: '#f8f9fa', 
           borderRight: '1px solid #dee2e6', 
-          padding: '20px',
+          padding: '24px 18px',
           overflowY: 'auto'
         }}>
           <h3>서비스 메뉴</h3>
           <nav className="sidebar-nav">
-            <ul style={{ listStyle: 'none', padding: 0 }}>
+            <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
               <li style={{ marginBottom: '8px' }}>
                 <button 
                   className={`sidebar-btn ${!selectedService ? 'active' : ''}`}
@@ -228,7 +229,7 @@ function AdminDashboard() {
                     onClick={() => handleServiceSelect(service.key)}
                     style={{
                       width: '100%',
-                      padding: '12px 16px',
+                      padding: '14px 14px',
                       border: 'none',
                       backgroundColor: selectedService === service.key ? '#007bff' : 'transparent',
                       color: selectedService === service.key ? 'white' : '#333',
