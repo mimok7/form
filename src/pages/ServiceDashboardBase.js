@@ -34,6 +34,25 @@ function ServiceDashboardBase({
     loading: memberLoading = false
   } = useSheetData('SH_M') || {};
 
+  // SH_C 시트에서 차량(픽업/드랍) 위치 가져오기 (주문ID 매칭)
+  const {
+    data: carData = [],
+    headers: carHeaders = [],
+    loading: carLoading = false
+  } = useSheetData('SH_C') || {};
+
+  const getCarFieldByOrderId = (orderId, fieldKey) => {
+    if (!orderId) return '';
+    if (!Array.isArray(carData) || !Array.isArray(carHeaders)) return '';
+    const orderIdx = carHeaders.indexOf('주문ID');
+    if (orderIdx === -1) return '';
+    const row = carData.find(r => r[orderIdx] === orderId);
+    if (!row) return '';
+    const targetIdx = carHeaders.indexOf(fieldKey); // '승차위치' | '하차위치'
+    if (targetIdx === -1) return '';
+    return row[targetIdx] || '';
+  };
+
   // 검색 필터링 + 날짜 필터링 (오늘 이후 데이터만)
   const filteredData = (Array.isArray(data) ? data : []).filter(row => {
     // 검색어 필터링
@@ -209,7 +228,7 @@ function ServiceDashboardBase({
 
       {/* 데이터 카드 */}
       <div className="data-section">
-        {loading || memberLoading ? (
+        {loading || memberLoading || carLoading ? (
           <div className="loading">데이터를 불러오는 중...</div>
         ) : error ? (
           <div className="error-message">
@@ -299,13 +318,22 @@ function ServiceDashboardBase({
                                       const memberInfo = orderId ? getMemberInfo(orderId) : null;
 
                                       let value = '-';
+                                      // SH_C에서 승차위치/하차위치 우선 매핑
+                                      if ((fieldKey === '승차위치' || fieldKey === '하차위치') && orderId) {
+                                        const carVal = getCarFieldByOrderId(orderId, fieldKey);
+                                        if (carVal && carVal.trim() !== '') value = carVal;
+                                      }
                                       if (memberInfo && memberInfo[fieldKey]) {
                                         // SH_M에서 가져온 사용자 정보 사용
-                                        value = memberInfo[fieldKey];
+                                        if (value === '-' || value === '' || value === null || value === undefined) {
+                                          value = memberInfo[fieldKey];
+                                        }
                                       } else {
                                         // 기존 데이터에서 값 가져오기
                                         const colIndex = headers.indexOf(fieldKey);
-                                        value = colIndex >= 0 ? (item.row[colIndex] || '-') : '-';
+                                        if (value === '-' || value === '' || value === null || value === undefined) {
+                                          value = colIndex >= 0 ? (item.row[colIndex] || '-') : '-';
+                                        }
                                       }
 
                                       return { label: fieldLabel, value, idx, fieldKey };
@@ -390,13 +418,22 @@ function ServiceDashboardBase({
                                 const memberInfo = orderId ? getMemberInfo(orderId) : null;
                                 
                                 let value = '-';
+                                // SH_C에서 승차위치/하차위치 우선 매핑
+                                if ((fieldKey === '승차위치' || fieldKey === '하차위치') && orderId) {
+                                  const carVal = getCarFieldByOrderId(orderId, fieldKey);
+                                  if (carVal && carVal.trim() !== '') value = carVal;
+                                }
                                 if (memberInfo && memberInfo[fieldKey]) {
-                                  // SH_M에서 가져온 사용자 정보 사용
-                                  value = memberInfo[fieldKey];
+                                  // SH_M에서 가져온 사용자 정보 사용 (값이 비어있을 때만 덮어씀)
+                                  if (value === '-' || value === '' || value === null || value === undefined) {
+                                    value = memberInfo[fieldKey];
+                                  }
                                 } else {
-                                  // 기존 데이터에서 값 가져오기
-                                  const colIndex = headers.indexOf(fieldKey);
-                                  value = colIndex >= 0 ? (row[colIndex] || '-') : '-';
+                                  // 기존 데이터에서 값 가져오기 (여전히 비어있다면)
+                                  if (value === '-' || value === '' || value === null || value === undefined) {
+                                    const colIndex = headers.indexOf(fieldKey);
+                                    value = colIndex >= 0 ? (row[colIndex] || '-') : '-';
+                                  }
                                 }
 
                                 return { label: fieldLabel, value, idx, fieldKey };

@@ -8,6 +8,8 @@ function SHCCDashboard({ onBack }) {
   { key: '주문ID', label: '주문ID' },
   { key: '승차일', label: '승차일' },
   { key: '분류', label: '분류' },
+  { key: '승차위치', label: '승차위치' },
+  { key: '하차위치', label: '하차위치' },
   { key: '차량번호', label: '차량번호' },
   { key: '좌석번호', label: '좌석번호' }
   ];

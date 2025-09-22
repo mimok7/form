@@ -1,6 +1,5 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import GoogleSheetInput from './mobile/GoogleSheetInput';
 import AdminDashboard from './pages/AdminDashboard';
 import CruiseDashboard from './pages/CruiseDashboard';
 import CarDashboard from './pages/CarDashboard';
@@ -27,7 +26,6 @@ function Header() {
 }
 
 function App() {
-  const [formData, setFormData] = useState({});
 
   return (
     <Router future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
