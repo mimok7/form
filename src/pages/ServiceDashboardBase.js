@@ -41,6 +41,59 @@ function ServiceDashboardBase({
     loading: carLoading = false
   } = useSheetData('SH_C') || {};
 
+  // SH_R(크루즈 예약) 시트와 cruise 마스터 시트 불러오기 (주문ID -> 크루즈명 -> 선착장 위치)
+  const {
+    data: cruiseResRows = [],
+    headers: cruiseResHeaders = [],
+    loading: cruiseResLoading = false
+  } = useSheetData('SH_R') || {};
+
+  const {
+    data: cruiseMasterRows = [],
+    headers: cruiseMasterHeaders = [],
+    loading: cruiseMasterLoading = false
+  } = useSheetData('cruise') || {};
+
+  // 케이스/공백 내성 있는 헤더 찾기
+  const findIndexCI = (headersArr, candidates = []) => {
+    if (!Array.isArray(headersArr)) return -1;
+    const norm = (s) => (s || '').toString().trim().toLowerCase();
+    const H = headersArr.map(norm);
+    for (const c of candidates) {
+      const i = H.indexOf(norm(c));
+      if (i !== -1) return i;
+    }
+    return -1;
+  };
+
+  const getCruiseNameByOrderId = (orderId) => {
+    if (!orderId) return '';
+    if (!Array.isArray(cruiseResRows) || !Array.isArray(cruiseResHeaders)) return '';
+    const orderIdx = findIndexCI(cruiseResHeaders, ['주문id', '주문ID', 'orderid']);
+    if (orderIdx === -1) return '';
+    const row = cruiseResRows.find(r => (r?.[orderIdx] || '') === orderId);
+    if (!row) return '';
+    const cruiseIdx = findIndexCI(cruiseResHeaders, ['크루즈', '크루즈명', 'cruise']);
+    return cruiseIdx !== -1 ? (row[cruiseIdx] || '') : '';
+  };
+
+  const getPierByCruiseName = (cruiseName) => {
+    if (!cruiseName) return '';
+    if (!Array.isArray(cruiseMasterRows) || !Array.isArray(cruiseMasterHeaders)) return '';
+    const cruiseIdx = findIndexCI(cruiseMasterHeaders, ['크루즈', '크루즈명', 'cruise']);
+    if (cruiseIdx === -1) return '';
+  const pierIdx = findIndexCI(cruiseMasterHeaders, ['선착장위치', '선착장 위치', '선착장', '승선장', '승선장소', 'pier', 'port']);
+    if (pierIdx === -1) return '';
+    const row = cruiseMasterRows.find(r => ('' + (r?.[cruiseIdx] || '')).trim() === ('' + cruiseName).trim());
+    return row ? (row[pierIdx] || '') : '';
+  };
+
+  const getPierByOrderId = (orderId) => {
+    const cruiseName = getCruiseNameByOrderId(orderId);
+    const pier = getPierByCruiseName(cruiseName);
+    return pier || '';
+  };
+
   const getCarFieldByOrderId = (orderId, fieldKey) => {
     if (!orderId) return '';
     if (!Array.isArray(carData) || !Array.isArray(carHeaders)) return '';
@@ -228,7 +281,7 @@ function ServiceDashboardBase({
 
       {/* 데이터 카드 */}
       <div className="data-section">
-        {loading || memberLoading || carLoading ? (
+        {loading || memberLoading || carLoading || cruiseResLoading || cruiseMasterLoading ? (
           <div className="loading">데이터를 불러오는 중...</div>
         ) : error ? (
           <div className="error-message">
@@ -322,6 +375,16 @@ function ServiceDashboardBase({
                                       if ((fieldKey === '승차위치' || fieldKey === '하차위치') && orderId) {
                                         const carVal = getCarFieldByOrderId(orderId, fieldKey);
                                         if (carVal && carVal.trim() !== '') value = carVal;
+                                      }
+                                      // 크루즈명 (SH_R)
+                                      if ((fieldKey === '크루즈' || fieldKey === '크루즈명' || fieldKey === 'cruise') && orderId) {
+                                        const cname = getCruiseNameByOrderId(orderId);
+                                        if (cname && cname.trim() !== '') value = cname;
+                                      }
+                                      // 선착장 위치 (주문ID -> SH_R의 크루즈 -> cruise 시트에서 선착장)
+                                      if ((fieldKey === '선착장위치' || fieldKey === '선착장 위치' || fieldKey === '선착장') && orderId) {
+                                        const pier = getPierByOrderId(orderId);
+                                        if (pier && pier.trim() !== '') value = pier;
                                       }
                                       if (memberInfo && memberInfo[fieldKey]) {
                                         // SH_M에서 가져온 사용자 정보 사용
@@ -422,6 +485,16 @@ function ServiceDashboardBase({
                                 if ((fieldKey === '승차위치' || fieldKey === '하차위치') && orderId) {
                                   const carVal = getCarFieldByOrderId(orderId, fieldKey);
                                   if (carVal && carVal.trim() !== '') value = carVal;
+                                }
+                                // 크루즈명 (SH_R)
+                                if ((fieldKey === '크루즈' || fieldKey === '크루즈명' || fieldKey === 'cruise') && orderId) {
+                                  const cname = getCruiseNameByOrderId(orderId);
+                                  if (cname && cname.trim() !== '') value = cname;
+                                }
+                                // 선착장 위치 매핑
+                                if ((fieldKey === '선착장위치' || fieldKey === '선착장 위치' || fieldKey === '선착장') && orderId) {
+                                  const pier = getPierByOrderId(orderId);
+                                  if (pier && pier.trim() !== '') value = pier;
                                 }
                                 if (memberInfo && memberInfo[fieldKey]) {
                                   // SH_M에서 가져온 사용자 정보 사용 (값이 비어있을 때만 덮어씀)
