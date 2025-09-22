@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 import { useSheetData } from '../utils/adminAPI';
 
 // A4 인쇄용 스하차량 배차표 리포트  
@@ -12,7 +12,7 @@ function ReportSHCC({ onBack }) {
   const { data: cruiseRows = [], headers: cruiseHeaders = [] } = useSheetData('cruise') || {};
 
   const [selectedDate, setSelectedDate] = useState('');
-  const [showPreview, setShowPreview] = useState(false);
+  const [showPreview, setShowPreview] = useState(true);
   const [language, setLanguage] = useState('ko'); // 'ko' or 'vi'
 
   const findIdx = (hs, name) => (Array.isArray(hs) ? hs.indexOf(name) : -1);
@@ -164,7 +164,6 @@ function ReportSHCC({ onBack }) {
   }, [data, headers, selectedDate]);
 
   // 차량별로 그룹화
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   const groupedByVehicle = useMemo(() => {
     const idxVehicle = findIdx(headers, '차량번호');
     const idxOrderId = findIdx(headers, '주문ID');
@@ -201,7 +200,7 @@ function ReportSHCC({ onBack }) {
     }
 
     return Array.from(groups.entries()).sort(([a], [b]) => a.localeCompare(b, 'ko'));
-  }, [filteredData, headers, shcData, shcHeaders, shrData, shrHeaders, cruiseRows, cruiseHeaders, getCarFieldByOrderId, getCruiseNameByOrderId, getPierByOrderId]);
+  }, [filteredData, headers, getCarFieldByOrderId, getCruiseNameByOrderId, getPierByOrderId]);
 
   // 컬럼 인덱스들
   const idxs = useMemo(() => ({
@@ -558,6 +557,14 @@ function ReportSHCC({ onBack }) {
       weekday: 'long' 
     });
   };
+
+  // availableDates가 로드되면 selectedDate가 비어있을 때 자동으로 첫 날짜를 선택
+  useEffect(() => {
+    if (!selectedDate && Array.isArray(availableDates) && availableDates.length > 0) {
+      setSelectedDate(availableDates[0]);
+      // preview는 기본 true이므로 자동으로 미리보기가 보입니다
+    }
+  }, [availableDates, selectedDate]);
 
   return (
     <div style={{ padding: '20px' }}>
