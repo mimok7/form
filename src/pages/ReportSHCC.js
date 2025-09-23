@@ -47,6 +47,7 @@ function ReportSHCC({ onBack }) {
       error: '오류',
       columns: {
         category: '구분',
+        classification: '분류',
         time: '시간',
         customer: '고객명',
         people: '인원',
@@ -77,6 +78,7 @@ function ReportSHCC({ onBack }) {
       error: 'Lỗi',
       columns: {
         category: 'Loại',
+        classification: 'Phân loại',
         time: 'Thời gian',
         customer: 'Khách hàng',
         people: 'Số người',
@@ -276,18 +278,22 @@ function ReportSHCC({ onBack }) {
           padding: 6px;
           text-align: left;
           font-size: 11px;
+          white-space: nowrap;
         }
         .report-table th,
         .report-table-vertical th {
           background: #f8f9fa;
           font-weight: bold;
           text-align: center;
-          width: 120px;
+          width: auto;
+          min-width: 80px;
         }
         .report-table-vertical .field-name {
           font-weight: bold;
           background: #f8f9fa;
-          width: 120px;
+          width: auto;
+          min-width: 80px;
+          white-space: nowrap;
         }
         .text-center { text-align: center; }
         .text-right { text-align: right; }
@@ -357,18 +363,22 @@ function ReportSHCC({ onBack }) {
           border: 1px solid #ddd;
           padding: 8px;
           text-align: left;
+          white-space: nowrap;
         }
         .report-table th,
         .report-table-vertical th {
           background: #f8f9fa;
           font-weight: bold;
           text-align: center;
-          width: 120px;
+          width: auto;
+          min-width: 80px;
         }
         .report-table-vertical .field-name {
           font-weight: bold;
           background: #f8f9fa;
-          width: 120px;
+          width: auto;
+          min-width: 80px;
+          white-space: nowrap;
         }
         .text-center { text-align: center; }
         .text-right { text-align: right; }
@@ -440,10 +450,12 @@ function ReportSHCC({ onBack }) {
                 <td class="field-name">${t.columns.category}</td>
                 <td>${category}</td>
               </tr>
+              ${classification ? `
               <tr>
                 <td class="field-name">${t.columns.classification}</td>
                 <td>${classification}</td>
               </tr>
+              ` : ''}
               <tr>
                 <td class="field-name">${t.columns.time}</td>
                 <td>${time}</td>

@@ -216,7 +216,8 @@ function ReportSHC({ onBack }) {
     carType: findIdx(headers, '차량종류'),
     carCode: findIdx(headers, '차량코드'),
     carCount: findIdx(headers, '차량수'),
-    people: findIdx(headers, '승차인원'),
+    // 승차인원 컬럼은 시트마다 명칭이 다를 수 있으므로 여러 후보로 대소문자 구분 없이 찾음
+    people: findIdxCI(headers, ['승차인원','인원','명수','인원수','passengers']),
     dateTime: findIdx(headers, '승차일시'),
     pickup: findIdx(headers, '승차위치'),
     dropoff: findIdx(headers, '하차위치'),
@@ -276,17 +277,21 @@ function ReportSHC({ onBack }) {
           padding: 6px;
           text-align: left;
           font-size: 11px;
+          white-space: nowrap;
         }
         .report-table-vertical th {
           background: #f8f9fa;
           font-weight: bold;
           text-align: center;
-          width: 120px;
+          width: auto;
+          min-width: 80px;
         }
         .report-table-vertical .field-name {
           font-weight: bold;
           background: #f8f9fa;
-          width: 120px;
+          width: auto;
+          min-width: 80px;
+          white-space: nowrap;
         }
         .text-center { text-align: center; }
         .text-right { text-align: right; }
@@ -349,17 +354,21 @@ function ReportSHC({ onBack }) {
           border: 1px solid #ddd;
           padding: 8px;
           text-align: left;
+          white-space: nowrap;
         }
         .report-table-vertical th {
           background: #f8f9fa;
           font-weight: bold;
           text-align: center;
-          width: 120px;
+          width: auto;
+          min-width: 80px;
         }
         .report-table-vertical .field-name {
           font-weight: bold;
           background: #f8f9fa;
-          width: 120px;
+          width: auto;
+          min-width: 80px;
+          white-space: nowrap;
         }
         .text-center { text-align: center; }
         .text-right { text-align: right; }
@@ -435,10 +444,12 @@ function ReportSHC({ onBack }) {
                 <td class="field-name">${t.columns.category}</td>
                 <td>${category}</td>
               </tr>
+              ${classification ? `
               <tr>
                 <td class="field-name">${t.columns.classification}</td>
                 <td>${classification}</td>
               </tr>
+              ` : ''}
               <tr>
                 <td class="field-name">${t.columns.time}</td>
                 <td>${time}</td>
