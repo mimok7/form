@@ -1,15 +1,15 @@
 import React, { useMemo, useState, useEffect } from 'react';
 import { useSheetData } from '../utils/adminAPI';
 
-// A4 인쇄용 스하차량 배차표 리포트  
-function ReportSHCC({ onBack }) {
+// A4 인쇄용 크루즈 차량 배차표 리포트  
+function ReportSHC({ onBack }) {
   // 시트 데이터 로드
-  const { data = [], headers = [], loading, error, loadData: reload } = useSheetData('SH_CC') || {};
+  const { data = [], headers = [], loading, error, loadData: reload } = useSheetData('SH_C') || {};
 
-  // 보조 시트 (픽업/드랍 및 크루즈/선착장)
-  const { data: shcData = [], headers: shcHeaders = [] } = useSheetData('SH_C') || {};
-  const { data: shrData = [], headers: shrHeaders = [] } = useSheetData('SH_R') || {};
+  // 보조 시트 (멤버 정보)
+  const { data: memberData = [], headers: memberHeaders = [] } = useSheetData('SH_M') || {};
   const { data: cruiseRows = [], headers: cruiseHeaders = [] } = useSheetData('cruise') || {};
+  const { data: shrData = [], headers: shrHeaders = [] } = useSheetData('SH_R') || {};
 
   const [selectedDate, setSelectedDate] = useState('');
   const [showPreview, setShowPreview] = useState(true);
@@ -29,7 +29,7 @@ function ReportSHCC({ onBack }) {
   // 다국어 텍스트
   const texts = {
     ko: {
-      title: '스테이 하롱 셔틀 리무진 배차표',
+      title: '크루즈 차량 배차표',
       printDate: '출력일',
       selectDate: '날짜 선택',
       selectDatePlaceholder: '날짜를 선택하세요',
@@ -50,16 +50,18 @@ function ReportSHCC({ onBack }) {
         time: '시간',
         customer: '고객명',
         people: '인원',
-        seat: '좌석',
+        carType: '차량종류',
+        carCount: '차량수',
         pickup: '승차위치',
         dropoff: '하차위치',
         cruise: '크루즈',
         pier: '선착장',
+        classification: '분류',
         note: '비고'
       }
     },
     vi: {
-      title: 'Lịch Trình Xe Shuttle Limousine Stay Halong',
+      title: 'Lịch Trình Xe Cruise',
       printDate: 'Ngày in',
       selectDate: 'Chọn ngày',
       selectDatePlaceholder: 'Vui lòng chọn ngày',
@@ -80,11 +82,13 @@ function ReportSHCC({ onBack }) {
         time: 'Thời gian',
         customer: 'Khách hàng',
         people: 'Số người',
-        seat: 'Ghế',
+        carType: 'Loại xe',
+        carCount: 'Số xe',
         pickup: 'Điểm đón',
         dropoff: 'Điểm trả',
         cruise: 'Du thuyền',
         pier: 'Bến tàu',
+        classification: 'Phân loại',
         note: 'Ghi chú'
       }
     }
@@ -92,27 +96,18 @@ function ReportSHCC({ onBack }) {
 
   const t = texts[language];
 
-  // 보조 조회 함수들
-  const getCarFieldByOrderId = (orderId, fieldKey) => {
+  // 고객명 조회 함수
+  const getCustomerNameByOrderId = (orderId) => {
     if (!orderId) return '';
-    const idxOrder = findIdx(shcHeaders, '주문ID');
+    const idxOrder = findIdx(memberHeaders, '주문ID');
     if (idxOrder === -1) return '';
-    const row = (shcData || []).find(r => (r?.[idxOrder] || '') === orderId);
+    const row = (memberData || []).find(r => (r?.[idxOrder] || '') === orderId);
     if (!row) return '';
-    const idxTarget = findIdx(shcHeaders, fieldKey);
-    return idxTarget >= 0 ? (row[idxTarget] || '') : '';
+    const idxName = findIdx(memberHeaders, '이름');
+    return idxName >= 0 ? (row[idxName] || '') : '';
   };
 
-  const getCruiseNameByOrderId = (orderId) => {
-    if (!orderId) return '';
-    const idxOrder = findIdxCI(shrHeaders, ['주문id','주문ID','orderid']);
-    if (idxOrder === -1) return '';
-    const row = (shrData || []).find(r => (r?.[idxOrder] || '') === orderId);
-    if (!row) return '';
-    const idxCruise = findIdxCI(shrHeaders, ['크루즈','크루즈명','cruise']);
-    return idxCruise >= 0 ? (row[idxCruise] || '') : '';
-  };
-
+  // 크루즈명으로 선착장 조회
   const getPierByCruiseName = (cruiseName) => {
     if (!cruiseName) return '';
     const idxCruise = findIdxCI(cruiseHeaders, ['크루즈','크루즈명','cruise']);
@@ -123,9 +118,21 @@ function ReportSHCC({ onBack }) {
     return row ? (row[idxPier] || '') : '';
   };
 
+  // 주문ID로 크루즈명 조회 (SH_R에서)
+  const getCruiseNameByOrderId = (orderId) => {
+    if (!orderId) return '';
+    const idxOrder = findIdxCI(shrHeaders, ['주문id','주문ID','orderid']);
+    if (idxOrder === -1) return '';
+    const row = (shrData || []).find(r => (r?.[idxOrder] || '') === orderId);
+    if (!row) return '';
+    const idxCruise = findIdxCI(shrHeaders, ['크루즈','크루즈명','cruise']);
+    return idxCruise >= 0 ? (row[idxCruise] || '') : '';
+  };
+
+  // 주문ID로 선착장 조회
   const getPierByOrderId = (orderId) => {
-    const c = getCruiseNameByOrderId(orderId);
-    return getPierByCruiseName(c);
+    const cruiseName = getCruiseNameByOrderId(orderId);
+    return getPierByCruiseName(cruiseName);
   };
 
   // 날짜 유틸: 로컬 기준 YYYY-MM-DD 변환 및 파싱
@@ -146,14 +153,14 @@ function ReportSHCC({ onBack }) {
 
   // 날짜별 필터링된 데이터
   const filteredData = useMemo(() => {
-    const idxDate = findIdx(headers, '승차일') !== -1 ? findIdx(headers, '승차일') : findIdx(headers, '승차일자');
-
+    const idxDate = findIdx(headers, '승차일시');
+    
     if (!selectedDate || idxDate === -1) return [];
-
+    
     return (data || []).filter(row => {
       const rowDate = row[idxDate];
       if (!rowDate) return false;
-
+      
       try {
         const rowYMD = toLocalYMD(new Date(rowDate));
         return rowYMD === selectedDate;
@@ -165,55 +172,55 @@ function ReportSHCC({ onBack }) {
 
   // 차량별로 그룹화
   const groupedByVehicle = useMemo(() => {
-    const idxVehicle = findIdx(headers, '차량번호');
+    const idxCarType = findIdx(headers, '차량종류');
     const idxOrderId = findIdx(headers, '주문ID');
-    const idxTime = findIdx(headers, '승차시간') !== -1 ? findIdx(headers, '승차시간') : findIdx(headers, '시간');
+    const idxDateTime = findIdx(headers, '승차일시');
 
     const groups = new Map();
 
     filteredData.forEach(row => {
-      const vehicle = idxVehicle !== -1 ? (row[idxVehicle] || '미지정') : '미지정';
+      const carType = idxCarType !== -1 ? (row[idxCarType] || '미지정') : '미지정';
       
-      if (!groups.has(vehicle)) {
-        groups.set(vehicle, []);
+      if (!groups.has(carType)) {
+        groups.set(carType, []);
       }
       
       const orderId = idxOrderId !== -1 ? row[idxOrderId] : '';
-      const pickup = getCarFieldByOrderId(orderId, '승차위치');
-      const dropoff = getCarFieldByOrderId(orderId, '하차위치');
-      const cruiseName = getCruiseNameByOrderId(orderId);
+      const customerName = getCustomerNameByOrderId(orderId);
       const pier = getPierByOrderId(orderId);
 
-      groups.get(vehicle).push({
+      groups.get(carType).push({
         row,
-        extra: { pickup, dropoff, cruiseName, pier }
+        extra: { customerName, pier }
       });
     });
 
     // 차량별로 시간순 정렬
     for (const [, items] of groups.entries()) {
       items.sort((a, b) => {
-        const timeA = idxTime !== -1 ? (a.row[idxTime] || '') : '';
-        const timeB = idxTime !== -1 ? (b.row[idxTime] || '') : '';
+        const timeA = idxDateTime !== -1 ? (a.row[idxDateTime] || '') : '';
+        const timeB = idxDateTime !== -1 ? (b.row[idxDateTime] || '') : '';
         return timeA.localeCompare(timeB, 'ko');
       });
     }
 
     return Array.from(groups.entries()).sort(([a], [b]) => a.localeCompare(b, 'ko'));
-  }, [filteredData, headers, getCarFieldByOrderId, getCruiseNameByOrderId, getPierByOrderId]);
+  }, [filteredData, headers, getCustomerNameByOrderId]);
 
   // 컬럼 인덱스들
   const idxs = useMemo(() => ({
-    name: findIdx(headers, '이름') !== -1 ? findIdx(headers, '이름') : findIdx(headers, '고객명'),
-    email: findIdx(headers, 'Email'),
     orderId: findIdx(headers, '주문ID'),
-    seatNo: findIdx(headers, '좌석번호'),
-    carNo: findIdx(headers, '차량번호'),
-    time: findIdx(headers, '승차시간') !== -1 ? findIdx(headers, '승차시간') : findIdx(headers, '시간'),
-    route: findIdx(headers, '경로'),
-    count: findIdx(headers, '인원') !== -1 ? findIdx(headers, '인원') : findIdx(headers, '명수'),
-    category: findIdx(headers, '분류') !== -1 ? findIdx(headers, '분류') : findIdx(headers, '구분'),
-    classification: findIdx(headers, '분류') !== -1 ? findIdx(headers, '분류') : findIdx(headers, '분류'),
+    category: findIdx(headers, '구분'),
+    classification: findIdx(headers, '분류'),
+    cruise: findIdx(headers, '크루즈'),
+    carType: findIdx(headers, '차량종류'),
+    carCode: findIdx(headers, '차량코드'),
+    carCount: findIdx(headers, '차량수'),
+    people: findIdx(headers, '승차인원'),
+    dateTime: findIdx(headers, '승차일시'),
+    pickup: findIdx(headers, '승차위치'),
+    dropoff: findIdx(headers, '하차위치'),
+    email: findIdx(headers, 'Email'),
   }), [headers]);
 
   // 인쇄용 스타일
@@ -258,18 +265,11 @@ function ReportSHCC({ onBack }) {
           border: 1px solid #ddd;
           margin-bottom: 5px;
         }
-        .report-table {
-          width: 100%;
-          border-collapse: collapse;
-          margin-bottom: 15px;
-        }
         .report-table-vertical {
           width: 100%;
           border-collapse: collapse;
           margin-bottom: 20px;
         }
-        .report-table th,
-        .report-table td,
         .report-table-vertical th,
         .report-table-vertical td {
           border: 1px solid #ddd;
@@ -277,7 +277,6 @@ function ReportSHCC({ onBack }) {
           text-align: left;
           font-size: 11px;
         }
-        .report-table th,
         .report-table-vertical th {
           background: #f8f9fa;
           font-weight: bold;
@@ -340,25 +339,17 @@ function ReportSHCC({ onBack }) {
           border: 1px solid #ddd;
           margin-bottom: 5px;
         }
-        .report-table {
-          width: 100%;
-          border-collapse: collapse;
-          margin-bottom: 15px;
-        }
         .report-table-vertical {
           width: 100%;
           border-collapse: collapse;
           margin-bottom: 20px;
         }
-        .report-table th,
-        .report-table td,
         .report-table-vertical th,
         .report-table-vertical td {
           border: 1px solid #ddd;
           padding: 8px;
           text-align: left;
         }
-        .report-table th,
         .report-table-vertical th {
           background: #f8f9fa;
           font-weight: bold;
@@ -392,13 +383,13 @@ function ReportSHCC({ onBack }) {
   const generatePrintHTML = () => {
     if (!selectedDate || groupedByVehicle.length === 0) return '';
 
-      const formatDate = (dateStr) => {
-        const d = (/^[0-9]{4}-[0-9]{2}-[0-9]{2}$/.test(dateStr)) ? parseYMDToLocalDate(dateStr) : new Date(dateStr);
-        if (language === 'vi') {
-          return d.toLocaleDateString('vi-VN', { year: 'numeric', month: 'long', day: 'numeric', weekday: 'long' });
-        }
-        return d.toLocaleDateString('ko-KR', { year: 'numeric', month: 'long', day: 'numeric', weekday: 'long' });
-      };
+    const formatDate = (dateStr) => {
+      const d = (/^[0-9]{4}-[0-9]{2}-[0-9]{2}$/.test(dateStr)) ? parseYMDToLocalDate(dateStr) : new Date(dateStr);
+      if (language === 'vi') {
+        return d.toLocaleDateString('vi-VN', { year: 'numeric', month: 'long', day: 'numeric', weekday: 'long' });
+      }
+      return d.toLocaleDateString('ko-KR', { year: 'numeric', month: 'long', day: 'numeric', weekday: 'long' });
+    };
 
     let html = `
       <!DOCTYPE html>
@@ -416,25 +407,29 @@ function ReportSHCC({ onBack }) {
           </div>
     `;
 
-    groupedByVehicle.forEach(([vehicle, items]) => {
+    groupedByVehicle.forEach(([carType, items]) => {
       html += `
         <div class="vehicle-section">
-          <div class="vehicle-header">🚐 ${vehicle} (${items.length}${t.totalCount})</div>
+          <div class="vehicle-header">🚗 ${carType} (${items.length}${t.totalCount})</div>
       `;
 
-      // 세로 테이블로 각 승객별 카드 형태
+      // 세로 테이블로 각 예약별 카드 형태
       items.forEach(({ row, extra }, index) => {
-        const time = idxs.time !== -1 ? (row[idxs.time] || '') : '';
-        const name = idxs.name !== -1 ? (row[idxs.name] || '') : '';
-        const count = idxs.count !== -1 ? (row[idxs.count] || '') : '';
-        const seat = idxs.seatNo !== -1 ? (row[idxs.seatNo] || '') : '';
+        const dateTime = idxs.dateTime !== -1 ? (row[idxs.dateTime] || '') : '';
+        const time = dateTime ? new Date(dateTime).toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' }) : '';
+        const customerName = extra.customerName || '';
+        const people = idxs.people !== -1 ? (row[idxs.people] || '') : '';
+        const carCount = idxs.carCount !== -1 ? (row[idxs.carCount] || '') : '';
+        const pickup = idxs.pickup !== -1 ? (row[idxs.pickup] || '') : '';
+        const dropoff = idxs.dropoff !== -1 ? (row[idxs.dropoff] || '') : '';
+        const cruise = idxs.cruise !== -1 ? (row[idxs.cruise] || '') : '';
+        const pier = extra.pier || '';
         const category = idxs.category !== -1 ? (row[idxs.category] || '') : '';
         const classification = idxs.classification !== -1 ? (row[idxs.classification] || '') : '';
-        const route = idxs.route !== -1 ? (row[idxs.route] || '') : '';
-        
+
         html += `
           <div class="passenger-card">
-            <div class="passenger-header">${index + 1}. ${name} (${time})</div>
+            <div class="passenger-header">${index + 1}. ${customerName} (${time})</div>
             <table class="report-table-vertical">
               <tr>
                 <td class="field-name">${t.columns.category}</td>
@@ -450,35 +445,35 @@ function ReportSHCC({ onBack }) {
               </tr>
               <tr>
                 <td class="field-name">${t.columns.customer}</td>
-                <td>${name}</td>
+                <td>${customerName}</td>
               </tr>
               <tr>
                 <td class="field-name">${t.columns.people}</td>
-                <td>${count}</td>
+                <td>${people}</td>
               </tr>
               <tr>
-                <td class="field-name">${t.columns.seat}</td>
-                <td>${seat}</td>
+                <td class="field-name">${t.columns.carType}</td>
+                <td>${carType}</td>
+              </tr>
+              <tr>
+                <td class="field-name">${t.columns.carCount}</td>
+                <td>${carCount}</td>
               </tr>
               <tr>
                 <td class="field-name">${t.columns.pickup}</td>
-                <td>${extra.pickup || ''}</td>
+                <td>${pickup}</td>
               </tr>
               <tr>
                 <td class="field-name">${t.columns.dropoff}</td>
-                <td>${extra.dropoff || ''}</td>
+                <td>${dropoff}</td>
               </tr>
               <tr>
                 <td class="field-name">${t.columns.cruise}</td>
-                <td>${extra.cruiseName || ''}</td>
+                <td>${cruise}</td>
               </tr>
               <tr>
                 <td class="field-name">${t.columns.pier}</td>
-                <td>${extra.pier || ''}</td>
-              </tr>
-              <tr>
-                <td class="field-name">${t.columns.note}</td>
-                <td>${route}</td>
+                <td>${pier}</td>
               </tr>
             </table>
           </div>
@@ -536,7 +531,7 @@ function ReportSHCC({ onBack }) {
 
   // 사용 가능한 날짜 목록
   const availableDates = useMemo(() => {
-    const idxDate = findIdx(headers, '승차일') !== -1 ? findIdx(headers, '승차일') : findIdx(headers, '승차일자');
+    const idxDate = findIdx(headers, '승차일시');
     if (idxDate === -1) return [];
 
     const dates = new Set();
@@ -716,4 +711,4 @@ function ReportSHCC({ onBack }) {
   );
 }
 
-export default ReportSHCC;
+export default ReportSHC;
