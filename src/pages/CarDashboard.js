@@ -10,7 +10,7 @@ function CarDashboard({ onBack }) {
     '분류',
     '크루즈',
     '차량종류',
-    '차량코드',
+
     '차량수',
     '승차인원',
     '승차일시',
@@ -18,8 +18,7 @@ function CarDashboard({ onBack }) {
     '하차위치',
     '수량',
     '처리',
-    '금액',
-    '합계',
+ 
     
   ];
   

@@ -152,11 +152,13 @@ function ServiceDashboardBase({
     const emailIndex = memberHeaders.indexOf('Email');
     const koreanNameIndex = memberHeaders.indexOf('한글이름');
     const englishNameIndex = memberHeaders.indexOf('영문이름');
+    const nameIndex = memberHeaders.indexOf('이름');
     
     return {
       Email: emailIndex >= 0 ? memberRow[emailIndex] : '-',
       한글이름: koreanNameIndex >= 0 ? memberRow[koreanNameIndex] : '-',
-      영문이름: englishNameIndex >= 0 ? memberRow[englishNameIndex] : '-'
+      영문이름: englishNameIndex >= 0 ? memberRow[englishNameIndex] : '-',
+      이름: nameIndex >= 0 ? memberRow[nameIndex] : '-'
     };
   };
 
@@ -323,7 +325,7 @@ function ServiceDashboardBase({
                                   const memberInfo = orderId ? getMemberInfo(orderId) : null;
                                   const nameIndex = headers.indexOf('고객명');
                                   const name = nameIndex >= 0 ? item.row[nameIndex] : '';
-                                  return memberInfo?.고객명 || name || `예약 ${itemIndex + 1}`;
+                                  return memberInfo?.이름 || memberInfo?.한글이름 || name || `예약 ${itemIndex + 1}`;
                                 })()}
                               </h4>
                               <div className="card-actions">

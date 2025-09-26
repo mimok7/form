@@ -9,7 +9,7 @@ function AirportDashboard({ onBack }) {
     '구분',
     '분류',
     '경로',
-    '차량코드',
+
     '차량종류',
     '일자',
     '시간',
@@ -25,7 +25,7 @@ function AirportDashboard({ onBack }) {
     '금액',
     '합계',
     '패스트',
-    '단위'
+
   ];
   
   return (

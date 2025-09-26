@@ -6,7 +6,7 @@ function RentalCarDashboard({ onBack }) {
     'Email',
     '한글이름',
     '영문이름',
-    '차량코드',
+
     '구분',
     '분류',
     '경로',
@@ -19,12 +19,10 @@ function RentalCarDashboard({ onBack }) {
     '목적지',
     '경유지',
     '승차인원',
-    '사용기간',
+
     '메모',
     '처리',
-    '금액',
-    '합계',
-    '단위'
+   
   ];
   
   return (

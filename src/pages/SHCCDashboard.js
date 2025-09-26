@@ -5,7 +5,7 @@ function SHCCDashboard({ onBack }) {
   const fieldOrder = [
   { key: '이름', label: '이름' },
   { key: 'Email', label: '이메일' },
-  { key: '주문ID', label: '주문ID' },
+
   { key: '승차일', label: '승차일' },
   { key: '분류', label: '분류' },
   { key: '크루즈', label: '크루즈' },
