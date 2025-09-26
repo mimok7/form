@@ -1,4 +1,4 @@
-import React, { useMemo, useState, useEffect } from 'react';
+import React, { useMemo, useState, useEffect, useCallback } from 'react';
 import { useSheetData } from '../utils/adminAPI';
 
 // A4 인쇄용 크루즈 차량 배차표 리포트  
@@ -11,9 +11,9 @@ function ReportSHC({ onBack }) {
   const { data: cruiseRows = [], headers: cruiseHeaders = [] } = useSheetData('cruise') || {};
   const { data: shrData = [], headers: shrHeaders = [] } = useSheetData('SH_R') || {};
 
-  const [selectedDate, setSelectedDate] = useState('');
+  const [startDate, setStartDate] = useState('');
+  const [endDate, setEndDate] = useState('');
   const [showPreview, setShowPreview] = useState(true);
-  const [language, setLanguage] = useState('ko'); // 'ko' or 'vi'
 
   const findIdx = (hs, name) => (Array.isArray(hs) ? hs.indexOf(name) : -1);
   const findIdxCI = (hs, candidates) => {
@@ -26,78 +26,43 @@ function ReportSHC({ onBack }) {
     return -1;
   };
 
-  // 다국어 텍스트
-  const texts = {
-    ko: {
-      title: '크루즈 차량 배차표',
-      printDate: '출력일',
-      selectDate: '날짜 선택',
-      selectDatePlaceholder: '날짜를 선택하세요',
-      print: '인쇄',
-      preview: '미리보기',
-      hidePreview: '미리보기 숨기기',
-      back: '뒤로가기',
-      refresh: '새로고침',
-      vehicle: '차량',
-      totalVehicles: '총',
-      totalCount: '건',
-      noData: '선택한 날짜에 해당하는 데이터가 없습니다.',
-      selectDateMessage: '상단에서 날짜를 선택하여 배차표를 생성하세요.',
-      loading: '데이터를 불러오는 중...',
-      error: '오류',
-      columns: {
-        category: '구분',
-        time: '시간',
-        customer: '고객명',
-        people: '인원',
-        carType: '차량종류',
-        carCount: '차량수',
-        pickup: '승차위치',
-        dropoff: '하차위치',
-        cruise: '크루즈',
-        pier: '선착장',
-        classification: '분류',
-        note: '비고'
-      }
-    },
-    vi: {
-      title: 'Lịch Trình Xe Cruise',
-      printDate: 'Ngày in',
-      selectDate: 'Chọn ngày',
-      selectDatePlaceholder: 'Vui lòng chọn ngày',
-      print: 'In',
-      preview: 'Xem trước',
-      hidePreview: 'Ẩn xem trước',
-      back: 'Quay lại',
-      refresh: 'Làm mới',
-      vehicle: 'xe',
-      totalVehicles: 'Tổng',
-      totalCount: 'chuyến',
-      noData: 'Không có dữ liệu cho ngày đã chọn.',
-      selectDateMessage: 'Vui lòng chọn ngày ở trên để tạo lịch trình.',
-      loading: 'Đang tải dữ liệu...',
-      error: 'Lỗi',
-      columns: {
-        category: 'Loại',
-        time: 'Thời gian',
-        customer: 'Khách hàng',
-        people: 'Số người',
-        carType: 'Loại xe',
-        carCount: 'Số xe',
-        pickup: 'Điểm đón',
-        dropoff: 'Điểm trả',
-        cruise: 'Du thuyền',
-        pier: 'Bến tàu',
-        classification: 'Phân loại',
-        note: 'Ghi chú'
-      }
+  // 텍스트
+  const t = {
+    title: '크루즈 차량 배차표',
+    printDate: '출력일',
+    startDate: '시작일',
+    endDate: '종료일',
+    selectDatePlaceholder: '날짜를 선택하세요',
+    print: '인쇄',
+    preview: '미리보기',
+    hidePreview: '미리보기 숨기기',
+    back: '뒤로가기',
+    refresh: '새로고침',
+    vehicle: '차량',
+    totalVehicles: '총',
+    totalCount: '건',
+    noData: '선택한 기간에 해당하는 데이터가 없습니다.',
+    selectDateMessage: '상단에서 날짜 구간을 선택하여 배차표를 생성하세요.',
+    loading: '데이터를 불러오는 중...',
+    error: '오류',
+    columns: {
+      category: '구분',
+      time: '시간',
+      customer: '고객명',
+      people: '인원',
+      carType: '차량종류',
+      carCount: '차량수',
+      pickup: '승차위치',
+      dropoff: '하차위치',
+      cruise: '크루즈',
+      pier: '선착장',
+      classification: '분류',
+      note: '비고'
     }
   };
 
-  const t = texts[language];
-
   // 고객명 조회 함수
-  const getCustomerNameByOrderId = (orderId) => {
+  const getCustomerNameByOrderId = useCallback((orderId) => {
     if (!orderId) return '';
     const idxOrder = findIdx(memberHeaders, '주문ID');
     if (idxOrder === -1) return '';
@@ -105,10 +70,10 @@ function ReportSHC({ onBack }) {
     if (!row) return '';
     const idxName = findIdx(memberHeaders, '이름');
     return idxName >= 0 ? (row[idxName] || '') : '';
-  };
+  }, [memberData, memberHeaders]);
 
   // 크루즈명으로 선착장 조회
-  const getPierByCruiseName = (cruiseName) => {
+  const getPierByCruiseName = useCallback((cruiseName) => {
     if (!cruiseName) return '';
     const idxCruise = findIdxCI(cruiseHeaders, ['크루즈','크루즈명','cruise']);
     if (idxCruise === -1) return '';
@@ -116,10 +81,10 @@ function ReportSHC({ onBack }) {
     if (idxPier === -1) return '';
     const row = (cruiseRows || []).find(r => (''+(r?.[idxCruise]||'')).trim() === (''+cruiseName).trim());
     return row ? (row[idxPier] || '') : '';
-  };
+  }, [cruiseRows, cruiseHeaders]);
 
   // 주문ID로 크루즈명 조회 (SH_R에서)
-  const getCruiseNameByOrderId = (orderId) => {
+  const getCruiseNameByOrderId = useCallback((orderId) => {
     if (!orderId) return '';
     const idxOrder = findIdxCI(shrHeaders, ['주문id','주문ID','orderid']);
     if (idxOrder === -1) return '';
@@ -127,13 +92,13 @@ function ReportSHC({ onBack }) {
     if (!row) return '';
     const idxCruise = findIdxCI(shrHeaders, ['크루즈','크루즈명','cruise']);
     return idxCruise >= 0 ? (row[idxCruise] || '') : '';
-  };
+  }, [shrData, shrHeaders]);
 
   // 주문ID로 선착장 조회
-  const getPierByOrderId = (orderId) => {
+  const getPierByOrderId = useCallback((orderId) => {
     const cruiseName = getCruiseNameByOrderId(orderId);
     return getPierByCruiseName(cruiseName);
-  };
+  }, [getCruiseNameByOrderId, getPierByCruiseName]);
 
   // 날짜 유틸: 로컬 기준 YYYY-MM-DD 변환 및 파싱
   const toLocalYMD = (d) => {
@@ -151,11 +116,11 @@ function ReportSHC({ onBack }) {
     return new Date(y, m - 1, dd);
   };
 
-  // 날짜별 필터링된 데이터
+  // 날짜 구간별 필터링된 데이터
   const filteredData = useMemo(() => {
     const idxDate = findIdx(headers, '승차일시');
     
-    if (!selectedDate || idxDate === -1) return [];
+    if (!startDate || !endDate || idxDate === -1) return [];
     
     return (data || []).filter(row => {
       const rowDate = row[idxDate];
@@ -163,12 +128,12 @@ function ReportSHC({ onBack }) {
       
       try {
         const rowYMD = toLocalYMD(new Date(rowDate));
-        return rowYMD === selectedDate;
+        return rowYMD >= startDate && rowYMD <= endDate;
       } catch {
         return false;
       }
     });
-  }, [data, headers, selectedDate]);
+  }, [data, headers, startDate, endDate]);
 
   // 차량별로 그룹화
   const groupedByVehicle = useMemo(() => {
@@ -205,7 +170,7 @@ function ReportSHC({ onBack }) {
     }
 
     return Array.from(groups.entries()).sort(([a], [b]) => a.localeCompare(b, 'ko'));
-  }, [filteredData, headers, getCustomerNameByOrderId]);
+  }, [filteredData, headers, getCustomerNameByOrderId, getPierByOrderId]);
 
   // 컬럼 인덱스들
   const idxs = useMemo(() => ({
@@ -390,29 +355,28 @@ function ReportSHC({ onBack }) {
 
   // 인쇄용 HTML 생성
   const generatePrintHTML = () => {
-    if (!selectedDate || groupedByVehicle.length === 0) return '';
+    if (!startDate || !endDate || groupedByVehicle.length === 0) return '';
 
     const formatDate = (dateStr) => {
       const d = (/^[0-9]{4}-[0-9]{2}-[0-9]{2}$/.test(dateStr)) ? parseYMDToLocalDate(dateStr) : new Date(dateStr);
-      if (language === 'vi') {
-        return d.toLocaleDateString('vi-VN', { year: 'numeric', month: 'long', day: 'numeric', weekday: 'long' });
-      }
       return d.toLocaleDateString('ko-KR', { year: 'numeric', month: 'long', day: 'numeric', weekday: 'long' });
     };
+
+    const periodTitle = startDate === endDate ? formatDate(startDate) : `${formatDate(startDate)} ~ ${formatDate(endDate)}`;
 
     let html = `
       <!DOCTYPE html>
       <html>
       <head>
         <meta charset="utf-8">
-        <title>${formatDate(selectedDate)} ${t.title}</title>
+        <title>${periodTitle} ${t.title}</title>
         ${printStyles}
       </head>
       <body>
         <div class="print-content">
           <div class="report-header">
-            <div class="report-title">${formatDate(selectedDate)} ${t.title}</div>
-            <div class="report-date">${t.printDate}: ${new Date().toLocaleDateString(language === 'vi' ? 'vi-VN' : 'ko-KR')}</div>
+            <div class="report-title">${periodTitle} ${t.title}</div>
+            <div class="report-date">${t.printDate}: ${new Date().toLocaleDateString('ko-KR')}</div>
           </div>
     `;
 
@@ -509,8 +473,8 @@ function ReportSHC({ onBack }) {
   };
 
   const handlePrint = () => {
-    if (!selectedDate || groupedByVehicle.length === 0) {
-      alert(language === 'vi' ? 'Vui lòng chọn ngày.' : '날짜를 선택해주세요.');
+    if (!startDate || !endDate || groupedByVehicle.length === 0) {
+      alert('날짜 구간을 선택해주세요.');
       return;
     }
 
@@ -540,59 +504,39 @@ function ReportSHC({ onBack }) {
     }, 100);
   };
 
-  // 사용 가능한 날짜 목록
-  const availableDates = useMemo(() => {
+  // 사용 가능한 날짜 범위
+  const dateRange = useMemo(() => {
     const idxDate = findIdx(headers, '승차일시');
-    if (idxDate === -1) return [];
+    if (idxDate === -1) return { min: '', max: '' };
 
-    const dates = new Set();
+    const dates = [];
     data.forEach(row => {
       const dateVal = row[idxDate];
       if (dateVal) {
         try {
-          const d = new Date(dateVal);
-          const ymd = toLocalYMD(d);
-          if (ymd) {
-            // 오늘 이후(포함) 만 추가
-            const todayYMD = toLocalYMD(new Date());
-            if (ymd >= todayYMD) {
-              dates.add(ymd);
-            }
-          }
+          const ymd = toLocalYMD(new Date(dateVal));
+          if (ymd) dates.push(ymd);
         } catch (e) {
           // 무시
         }
       }
     });
 
-    return Array.from(dates).sort();
+    if (dates.length === 0) return { min: '', max: '' };
+    dates.sort();
+    return { min: dates[0], max: dates[dates.length - 1] };
   }, [data, headers]);
 
-  const formatDateOption = (dateStr) => {
-    const d = new Date(dateStr);
-    if (language === 'vi') {
-      return d.toLocaleDateString('vi-VN', { 
-        year: 'numeric', 
-        month: 'long', 
-        day: 'numeric', 
-        weekday: 'long' 
-      });
-    }
-    return d.toLocaleDateString('ko-KR', { 
-      year: 'numeric', 
-      month: 'long', 
-      day: 'numeric', 
-      weekday: 'long' 
-    });
-  };
-
-  // availableDates가 로드되면 selectedDate가 비어있을 때 자동으로 첫 날짜를 선택
+  // 기본값을 오늘 날짜로 설정
   useEffect(() => {
-    if (!selectedDate && Array.isArray(availableDates) && availableDates.length > 0) {
-      setSelectedDate(availableDates[0]);
-      // preview는 기본 true이므로 자동으로 미리보기가 보입니다
+    const today = toLocalYMD(new Date());
+    if (!startDate) {
+      setStartDate(today);
     }
-  }, [availableDates, selectedDate]);
+    if (!endDate) {
+      setEndDate(today);
+    }
+  }, [startDate, endDate]);
 
   return (
     <div style={{ padding: '20px' }}>
@@ -605,65 +549,43 @@ function ReportSHC({ onBack }) {
           <button onClick={() => reload()} style={{ padding: '8px 16px' }}>
             🔄 {t.refresh}
           </button>
-          
-          {/* 언어 전환 버튼 */}
-          <div style={{ marginLeft: 'auto', display: 'flex', gap: '4px' }}>
-            <button 
-              onClick={() => setLanguage('ko')}
-              style={{ 
-                padding: '6px 12px',
-                background: language === 'ko' ? '#007bff' : '#e9ecef',
-                color: language === 'ko' ? 'white' : '#333',
-                border: 'none',
-                borderRadius: '4px',
-                cursor: 'pointer'
-              }}
-            >
-              한글
-            </button>
-            <button 
-              onClick={() => setLanguage('vi')}
-              style={{ 
-                padding: '6px 12px',
-                background: language === 'vi' ? '#007bff' : '#e9ecef',
-                color: language === 'vi' ? 'white' : '#333',
-                border: 'none',
-                borderRadius: '4px',
-                cursor: 'pointer'
-              }}
-            >
-              Tiếng Việt
-            </button>
-          </div>
         </div>
 
         <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
           <label>
-            {t.selectDate}:
-            <select 
-              value={selectedDate} 
-              onChange={(e) => setSelectedDate(e.target.value)}
+            {t.startDate}:
+            <input 
+              type="date"
+              value={startDate} 
+              onChange={(e) => setStartDate(e.target.value)}
+              min={dateRange.min}
+              max={dateRange.max}
               style={{ marginLeft: '8px', padding: '6px 12px' }}
-            >
-              <option value="">{t.selectDatePlaceholder}</option>
-              {availableDates.map(date => (
-                <option key={date} value={date}>
-                  {formatDateOption(date)}
-                </option>
-              ))}
-            </select>
+            />
+          </label>
+          
+          <label>
+            {t.endDate}:
+            <input 
+              type="date"
+              value={endDate} 
+              onChange={(e) => setEndDate(e.target.value)}
+              min={dateRange.min}
+              max={dateRange.max}
+              style={{ marginLeft: '8px', padding: '6px 12px' }}
+            />
           </label>
 
           <button 
             onClick={handlePrint}
-            disabled={!selectedDate || groupedByVehicle.length === 0}
+            disabled={!startDate || !endDate || groupedByVehicle.length === 0}
             style={{ 
               padding: '8px 16px', 
               background: '#007bff', 
               color: 'white', 
               border: 'none', 
               borderRadius: '4px',
-              cursor: selectedDate ? 'pointer' : 'not-allowed'
+              cursor: (startDate && endDate) ? 'pointer' : 'not-allowed'
             }}
           >
             🖨️ {t.print}
@@ -671,23 +593,23 @@ function ReportSHC({ onBack }) {
 
           <button 
             onClick={() => setShowPreview(!showPreview)}
-            disabled={!selectedDate}
+            disabled={!startDate || !endDate}
             style={{ 
               padding: '8px 16px', 
               background: '#28a745', 
               color: 'white', 
               border: 'none', 
               borderRadius: '4px',
-              cursor: selectedDate ? 'pointer' : 'not-allowed'
+              cursor: (startDate && endDate) ? 'pointer' : 'not-allowed'
             }}
           >
             👁️ {showPreview ? t.hidePreview : t.preview}
           </button>
         </div>
 
-        {selectedDate && (
+        {startDate && endDate && (
           <div style={{ marginTop: '10px', fontSize: '14px', color: '#666' }}>
-            {language === 'vi' ? 'Ngày đã chọn' : '선택된 날짜'}: {formatDateOption(selectedDate)} | {t.totalVehicles} {groupedByVehicle.length}{t.vehicle} | {language === 'vi' ? 'Tổng số' : '총 건수'}: {filteredData.length}{t.totalCount}
+            선택된 기간: {startDate} ~ {endDate} | {t.totalVehicles} {groupedByVehicle.length}{t.vehicle} | 총 건수: {filteredData.length}{t.totalCount}
           </div>
         )}
       </div>
@@ -697,7 +619,7 @@ function ReportSHC({ onBack }) {
       {error && <div style={{ padding: '20px', color: 'red' }}>{t.error}: {error}</div>}
 
       {/* 미리보기 */}
-      {showPreview && selectedDate && (
+      {showPreview && startDate && endDate && (
         <div 
           className="print-preview-area"
           style={{ border: '1px solid #ddd', borderRadius: '8px', overflow: 'hidden' }}
@@ -706,14 +628,14 @@ function ReportSHC({ onBack }) {
       )}
 
       {/* 데이터가 없는 경우 */}
-      {!loading && !error && selectedDate && groupedByVehicle.length === 0 && (
+      {!loading && !error && startDate && endDate && groupedByVehicle.length === 0 && (
         <div style={{ padding: '40px', textAlign: 'center', color: '#666' }}>
           {t.noData}
         </div>
       )}
 
       {/* 날짜 미선택 상태 */}
-      {!loading && !error && !selectedDate && (
+      {!loading && !error && (!startDate || !endDate) && (
         <div style={{ padding: '40px', textAlign: 'center', color: '#666' }}>
           {t.selectDateMessage}
         </div>
