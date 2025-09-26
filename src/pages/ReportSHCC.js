@@ -51,16 +51,12 @@ function ReportSHCC({ onBack }) {
     error: '오류',
     columns: {
       category: '구분',
-      classification: '분류',
-      time: '시간',
       customer: '고객명',
       people: '인원',
       seat: '좌석',
       pickup: '승차위치',
       dropoff: '하차위치',
-      cruise: '크루즈',
-      pier: '선착장',
-      note: '비고'
+      pier: '선착장'
     }
   };
 
@@ -170,12 +166,11 @@ function ReportSHCC({ onBack }) {
       const orderId = idxOrderId !== -1 ? row[idxOrderId] : '';
       const pickup = getCarFieldByOrderId(orderId, '승차위치');
       const dropoff = getCarFieldByOrderId(orderId, '하차위치');
-      const cruiseName = getCruiseNameByOrderId(orderId);
       const pier = getPierByOrderId(orderId);
 
       groups.get(vehicle).push({
         row,
-        extra: { pickup, dropoff, cruiseName, pier }
+        extra: { pickup, dropoff, pier }
       });
     });
 
@@ -189,7 +184,7 @@ function ReportSHCC({ onBack }) {
     }
 
     return Array.from(groups.entries()).sort(([a], [b]) => a.localeCompare(b, 'ko'));
-  }, [filteredData, headers, getCarFieldByOrderId, getCruiseNameByOrderId, getPierByOrderId]);
+  }, [filteredData, headers, getCarFieldByOrderId, getPierByOrderId]);
 
   // 컬럼 인덱스들
   const idxs = useMemo(() => ({
@@ -199,10 +194,8 @@ function ReportSHCC({ onBack }) {
     seatNo: findIdx(headers, '좌석번호'),
     carNo: findIdx(headers, '차량번호'),
     time: findIdx(headers, '승차시간') !== -1 ? findIdx(headers, '승차시간') : findIdx(headers, '시간'),
-    route: findIdx(headers, '경로'),
     count: findIdx(headers, '인원') !== -1 ? findIdx(headers, '인원') : findIdx(headers, '명수'),
     category: findIdx(headers, '분류') !== -1 ? findIdx(headers, '분류') : findIdx(headers, '구분'),
-    classification: findIdx(headers, '분류') !== -1 ? findIdx(headers, '분류') : findIdx(headers, '분류'),
   }), [headers]);
 
   // 인쇄용 스타일
@@ -425,8 +418,6 @@ function ReportSHCC({ onBack }) {
         const count = idxs.count !== -1 ? (row[idxs.count] || '') : '';
         const seat = idxs.seatNo !== -1 ? (row[idxs.seatNo] || '') : '';
         const category = idxs.category !== -1 ? (row[idxs.category] || '') : '';
-        const classification = idxs.classification !== -1 ? (row[idxs.classification] || '') : '';
-        const route = idxs.route !== -1 ? (row[idxs.route] || '') : '';
         
         html += `
           <div class="passenger-card">
@@ -435,16 +426,6 @@ function ReportSHCC({ onBack }) {
               <tr>
                 <td class="field-name">${t.columns.category}</td>
                 <td>${category}</td>
-              </tr>
-              ${classification ? `
-              <tr>
-                <td class="field-name">${t.columns.classification}</td>
-                <td>${classification}</td>
-              </tr>
-              ` : ''}
-              <tr>
-                <td class="field-name">${t.columns.time}</td>
-                <td>${time}</td>
               </tr>
               <tr>
                 <td class="field-name">${t.columns.customer}</td>
@@ -467,16 +448,8 @@ function ReportSHCC({ onBack }) {
                 <td>${extra.dropoff || ''}</td>
               </tr>
               <tr>
-                <td class="field-name">${t.columns.cruise}</td>
-                <td>${extra.cruiseName || ''}</td>
-              </tr>
-              <tr>
                 <td class="field-name">${t.columns.pier}</td>
                 <td>${extra.pier || ''}</td>
-              </tr>
-              <tr>
-                <td class="field-name">${t.columns.note}</td>
-                <td>${route}</td>
               </tr>
             </table>
           </div>
