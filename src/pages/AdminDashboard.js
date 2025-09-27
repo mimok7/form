@@ -14,7 +14,7 @@ import Notice from './Notice';
 import './AdminDashboard.css';
 
 const SERVICES = [
-  { key: 'user', name: '사용자', component: UserDashboard },
+  { key: 'user', name: '예약일별', component: UserDashboard },
   { key: 'cruise', name: '크루즈', component: CruiseDashboard },
   { key: 'car', name: '차량', component: CarDashboard },
   { key: 'airport', name: '공항', component: AirportDashboard },
@@ -102,7 +102,7 @@ function AdminDashboard() {
                   )}
                 </div>
                 <h3>{service.name}</h3>
-                <p>{service.key === 'user' ? '사용자별 예약 모아보기' : `${service.name} 예약 관리`}</p>
+                <p>{service.key === 'user' ? '예약일별 사용자 모아보기' : `${service.name} 예약 관리`}</p>
                 <button className="service-btn">
                   관리하기
                 </button>

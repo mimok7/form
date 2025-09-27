@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 import { useSheetData } from '../utils/adminAPI';
 import './AdminDashboard.css';
 
@@ -72,6 +72,29 @@ export default function UserDashboard({ onBack }) {
   const [selectedUser, setSelectedUser] = useState(null);
   const [popupView, setPopupView] = useState('basic'); // 'basic' or 'full'
   const [popupSearchedId, setPopupSearchedId] = useState(''); // 팝업 전용 검색 상태
+  const [startDate, setStartDate] = useState('');
+  const [endDate, setEndDate] = useState('');
+
+  // 기본 날짜 설정: 시작일은 3일 전, 종료일은 오늘
+  useEffect(() => {
+    const today = new Date();
+    const threeDaysAgo = new Date(today);
+    threeDaysAgo.setDate(today.getDate() - 3);
+    
+    const formatDate = (date) => {
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, '0');
+      const day = String(date.getDate()).padStart(2, '0');
+      return `${year}-${month}-${day}`;
+    };
+    
+    if (!startDate) {
+      setStartDate(formatDate(threeDaysAgo));
+    }
+    if (!endDate) {
+      setEndDate(formatDate(today));
+    }
+  }, [startDate, endDate]);
 
   const handleViewUser = (user) => {
     setSelectedUser(user);
@@ -94,7 +117,7 @@ export default function UserDashboard({ onBack }) {
     }
   };
 
-  function buildRecentUsersLocal(mHeaders, mData) {
+  function buildRecentUsersLocal(mHeaders, mData, startDate, endDate) {
     if (!mHeaders || !mData) return [];
     const headers = mHeaders;
     
@@ -114,7 +137,16 @@ export default function UserDashboard({ onBack }) {
     const users = [];
   mData.forEach((row) => {
       const dt = dateIdx >= 0 ? tryParseDate(row[dateIdx]) : null;
-      // SH_M 시트의 모든 데이터를 표시 (날짜 필터링 제거)
+      
+      // 날짜 범위 필터링
+      if (startDate || endDate) {
+        if (!dt) return; // 날짜가 없는 데이터는 필터링 시 제외
+        const start = startDate ? new Date(startDate) : null;
+        const end = endDate ? new Date(endDate) : null;
+        if (start && dt < start) return;
+        if (end && dt > end) return;
+      }
+      
       const orderId = mOrderIdIdx >= 0 ? row[mOrderIdIdx] : null;
       const nameKo = mNameKoIdx >= 0 ? row[mNameKoIdx] || '' : '';
       const nameEn = mNameEnIdx >= 0 ? row[mNameEnIdx] || '' : '';
@@ -139,14 +171,16 @@ export default function UserDashboard({ onBack }) {
     return arr;
   }
 
-  const recentUsersGlobal = useMemo(() => buildRecentUsersLocal(SH_M_headers, SH_M_data), [SH_M_data, SH_M_headers]);
+  const recentUsersGlobal = useMemo(() => buildRecentUsersLocal(SH_M_headers, SH_M_data, startDate, endDate), [SH_M_data, SH_M_headers, startDate, endDate]);
 
   // SH_M 시트의 예약일 기준으로 그룹화
   const usersByDate = useMemo(() => {
     const grouped = new Map();
     recentUsersGlobal.forEach(user => {
-      // SH_M 시트의 예약일이 있는 경우 YYYY-MM-DD 형식으로 그룹화
-      const dateKey = user.date ? user.date.toISOString().slice(0, 10) : '예약일 없음';
+      // SH_M 시트의 예약일이 있는 경우 로컬 YYYY-MM-DD 형식으로 그룹화
+      const dateKey = user.date ? 
+        `${user.date.getFullYear()}-${String(user.date.getMonth() + 1).padStart(2, '0')}-${String(user.date.getDate()).padStart(2, '0')}` : 
+        '예약일 없음';
       if (!grouped.has(dateKey)) grouped.set(dateKey, []);
       grouped.get(dateKey).push(user);
     });
@@ -479,7 +513,7 @@ export default function UserDashboard({ onBack }) {
   return (
     <div className="service-dashboard">
       <div className="admin-header">
-        <h1>사용자 활성 페이지</h1>
+        <h1>예약일 별 현황 </h1>
         <div style={{ display: 'flex', gap: 12 }}>
           {onBack && (
             <button className="back-btn" onClick={onBack}>← 뒤로</button>
@@ -500,6 +534,33 @@ export default function UserDashboard({ onBack }) {
         {searchedId && (
           <button className="cancel-btn" style={{ marginLeft: 8 }} onClick={() => { setOrderIdInput(''); setSearchedId(''); }}>초기화</button>
         )}
+        
+        {/* 날짜 범위 선택 */}
+        <div style={{ marginTop: '12px', display: 'flex', gap: '8px', alignItems: 'center' }}>
+          <label style={{ fontSize: '14px', fontWeight: 'bold' }}>시작일:</label>
+          <input
+            type="date"
+            value={startDate}
+            onChange={(e) => setStartDate(e.target.value)}
+            style={{ padding: '6px 12px', border: '1px solid #ccc', borderRadius: '4px' }}
+          />
+          <label style={{ fontSize: '14px', fontWeight: 'bold' }}>종료일:</label>
+          <input
+            type="date"
+            value={endDate}
+            onChange={(e) => setEndDate(e.target.value)}
+            style={{ padding: '6px 12px', border: '1px solid #ccc', borderRadius: '4px' }}
+          />
+          {(startDate || endDate) && (
+            <button 
+              className="cancel-btn" 
+              onClick={() => { setStartDate(''); setEndDate(''); }}
+              style={{ padding: '6px 12px' }}
+            >
+              날짜 초기화
+            </button>
+          )}
+        </div>
       </div>
 
       {searchedId ? (
@@ -699,7 +760,7 @@ export default function UserDashboard({ onBack }) {
                                 <span className="label-text">예약일</span>
                               </th>
                               <td className="card-colvalue">{u.date instanceof Date ? 
-                                `${u.date.getFullYear()}년 ${u.date.getMonth() + 1}월 ${u.date.getDate()}일 ${u.date.toLocaleTimeString([], {hour: '2-digit', minute: '2-digit'})}` : 
+                                `${u.date.getFullYear()}년 ${u.date.getMonth() + 1}월 ${u.date.getDate()}일` : 
                                 '예약일 정보 없음'}</td>
                             </tr>
                             <tr className="card-row">
@@ -794,7 +855,7 @@ export default function UserDashboard({ onBack }) {
                           <span className="label-text">예약일</span>
                         </th>
                         <td className="card-colvalue">{selectedUser.date instanceof Date ? 
-                          `${selectedUser.date.getFullYear()}년 ${selectedUser.date.getMonth() + 1}월 ${selectedUser.date.getDate()}일 ${selectedUser.date.toLocaleTimeString([], {hour: '2-digit', minute: '2-digit'})}` : 
+                          `${selectedUser.date.getFullYear()}년 ${selectedUser.date.getMonth() + 1}월 ${selectedUser.date.getDate()}일` : 
                           '예약일 정보 없음'}</td>
                       </tr>
                     </tbody>
