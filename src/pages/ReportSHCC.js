@@ -545,16 +545,14 @@ function ReportSHCC({ onBack }) {
     <div style={{ padding: '20px' }}>
       {/* 컨트롤 패널 */}
       <div className="no-print" style={{ marginBottom: '20px', padding: '15px', background: '#f8f9fa', borderRadius: '8px' }}>
-        <div style={{ display: 'flex', gap: '12px', alignItems: 'center', marginBottom: '15px' }}>
+        <div style={{ display: 'flex', gap: '12px', alignItems: 'center', flexWrap: 'wrap' }}>
           <button onClick={onBack} style={{ padding: '8px 16px' }}>
             ← {t.back}
           </button>
           <button onClick={() => reload()} style={{ padding: '8px 16px' }}>
             🔄 {t.refresh}
           </button>
-        </div>
 
-        <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
           <label>
             {t.startDate}:
             <input 
@@ -608,12 +606,10 @@ function ReportSHCC({ onBack }) {
           >
             👁️ {showPreview ? t.hidePreview : t.preview}
           </button>
-        </div>
 
-        {/* 픽업/드랍 필터 탭 */}
-        {startDate && endDate && (
-          <div style={{ marginTop: '15px', borderTop: '1px solid #dee2e6', paddingTop: '15px' }}>
-            <div style={{ display: 'flex', gap: '0', marginBottom: '10px' }}>
+          {/* 픽업/드랍 필터 탭 */}
+          {startDate && endDate && (
+            <>
               <button
                 onClick={() => setFilterType('all')}
                 style={{
@@ -656,7 +652,13 @@ function ReportSHCC({ onBack }) {
               >
                 {t.filterDrop}
               </button>
-            </div>
+            </>
+          )}
+        </div>
+
+        {/* 통계 정보 */}
+        {startDate && endDate && (
+          <div style={{ marginTop: '15px', paddingTop: '15px', borderTop: '1px solid #dee2e6' }}>
             <div style={{ fontSize: '14px', color: '#666' }}>
               선택된 기간: {startDate} ~ {endDate} | {t.totalVehicles} {groupedByVehicle.length}{t.vehicle} | 총 건수: {filteredData.length}{t.totalCount}
             </div>
