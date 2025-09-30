@@ -10,6 +10,7 @@ import HotelDashboard from './pages/HotelDashboard';
 import AlertProvider from './mobile/components/CustomAlert';
 import ReservationConfirmation from './pages/ReservationConfirmation';
 import Notice from './pages/Notice';
+import MobileBookingForm from './mobile/GoogleSheetInput';
 import './MobileBookingForm.css';
 
 function Header() {
@@ -39,6 +40,11 @@ function App() {
               <Route
                 path="/"
                 element={<Navigate to="/admin" replace />}
+              />
+              {/* 모바일 예약 페이지 */}
+              <Route
+                path="/booking"
+                element={<MobileBookingForm />}
               />
               {/* 관리자 대시보드 메인 */}
               <Route
