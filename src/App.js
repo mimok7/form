@@ -36,12 +36,12 @@ function App() {
 
           <main className="app-main">
             <Routes>
-              {/* 기본 경로를 /admin으로 리다이렉트 */}
+              {/* 기본 경로를 모바일 예약 페이지로 설정 */}
               <Route
                 path="/"
-                element={<Navigate to="/admin" replace />}
+                element={<MobileBookingForm />}
               />
-              {/* 모바일 예약 페이지 */}
+              {/* 모바일 예약 페이지 (별칭) */}
               <Route
                 path="/booking"
                 element={<MobileBookingForm />}
