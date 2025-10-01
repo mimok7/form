@@ -53,8 +53,11 @@ function doPost(e) {
     let body = {};
     try { body = e.postData && e.postData.contents ? JSON.parse(e.postData.contents) : {}; } catch (err) { return _json({ success:false, error:'invalid json' }); }
 
+    Logger.log('doPost called with body:', JSON.stringify(body));
+
     // Support action-based shortcuts for saving to Drive and sending email
     const action = (body.action || '').toString().trim();
+    Logger.log('Action parsed:', action);
     if(action === 'saveToDrive' || body.driveId){
       try{
         const driveId = body.driveId;
@@ -72,9 +75,20 @@ function doPost(e) {
     }
     if(action === 'syncMatchingSheets'){
       try{
+        Logger.log('Processing syncMatchingSheets action');
         const result = syncMatchingSheets(body);
+        Logger.log('syncMatchingSheets completed:', result);
         return _json({ success:true, result });
-      }catch(err){ return _json({ success:false, error: err && err.message ? err.message : String(err) }); }
+      }catch(err){ 
+        Logger.log('syncMatchingSheets error:', err);
+        return _json({ success:false, error: err && err.message ? err.message : String(err) }); 
+      }
+    }
+
+    // If action is specified but not recognized, return error
+    if (action) {
+      Logger.log('Unknown action received:', action);
+      return _json({ success:false, error:'unknown action: ' + action });
     }
 
     // Fallback: original append-row behavior
@@ -195,29 +209,50 @@ function sendReservationEmail(body){
 
 // --- Sync Matching Sheets Function ---
 function syncMatchingSheets(body){
+  Logger.log('syncMatchingSheets called with body:', JSON.stringify(body));
+
+  // Ensure script properties are set
+  try {
+    const props = PropertiesService.getScriptProperties();
+    if (!props.getProperty('TARGET_SHEET_ID')) {
+      Logger.log('Setting default script properties');
+      _setScriptPropsForDeploy();
+    }
+  } catch (e) {
+    Logger.log('Error setting properties:', e);
+  }
+
   const sourceSheetId = body.sourceSheetId || _getProp('SOURCE_SHEET_ID', '');
   const targetSheetId = body.targetSheetId || _getProp('TARGET_SHEET_ID', '');
 
+  Logger.log('sourceSheetId:', sourceSheetId);
+  Logger.log('targetSheetId:', targetSheetId);
+
   if (!sourceSheetId || !targetSheetId) {
-    throw new Error('sourceSheetId and targetSheetId are required');
+    const errorMsg = `Missing IDs - sourceSheetId: "${sourceSheetId}", targetSheetId: "${targetSheetId}"`;
+    Logger.log('Error:', errorMsg);
+    throw new Error(errorMsg);
   }
 
   try {
+    Logger.log('Opening source spreadsheet:', sourceSheetId);
     const sourceSs = SpreadsheetApp.openById(sourceSheetId);
+    Logger.log('Opening target spreadsheet:', targetSheetId);
     const targetSs = SpreadsheetApp.openById(targetSheetId);
 
     const sourceSheets = sourceSs.getSheets();
-    const targetSheets = targetSs.getSheets();
-    const targetSheetNames = targetSheets.map(sheet => sheet.getName());
+    Logger.log('Source sheets count:', sourceSheets.length);
 
     let syncedCount = 0;
     let log = [];
 
     for (const sourceSheet of sourceSheets) {
       const sheetName = sourceSheet.getName();
+      Logger.log('Processing sheet:', sheetName);
 
       // Skip log sheets and system sheets
       if (sheetName === LOG_SHEET || sheetName.startsWith('__')) {
+        Logger.log('Skipping sheet:', sheetName);
         continue;
       }
 
@@ -227,16 +262,19 @@ function syncMatchingSheets(body){
 
         if (!targetSheet) {
           // Create new sheet if it doesn't exist
+          Logger.log('Creating new sheet:', sheetName);
           targetSheet = targetSs.insertSheet(sheetName);
           log.push(`Created new sheet: ${sheetName}`);
         } else {
           // Clear existing data
+          Logger.log('Clearing existing sheet:', sheetName);
           targetSheet.clear();
           log.push(`Cleared existing sheet: ${sheetName}`);
         }
 
         // Copy data from source to target
         const sourceData = sourceSheet.getDataRange().getValues();
+        Logger.log('Source data rows:', sourceData.length);
         if (sourceData.length > 0) {
           targetSheet.getRange(1, 1, sourceData.length, sourceData[0].length).setValues(sourceData);
           log.push(`Copied ${sourceData.length} rows to sheet: ${sheetName}`);
@@ -245,18 +283,23 @@ function syncMatchingSheets(body){
         syncedCount++;
 
       } catch (sheetError) {
+        Logger.log('Error syncing sheet', sheetName, ':', sheetError);
         log.push(`Error syncing sheet ${sheetName}: ${sheetError.message}`);
       }
     }
 
-    return {
+    const result = {
       success: true,
       message: `${syncedCount} sheets synchronized successfully`,
       syncedCount: syncedCount,
       log: log
     };
 
+    Logger.log('Sync completed:', JSON.stringify(result));
+    return result;
+
   } catch (error) {
+    Logger.log('Sync failed:', error);
     throw new Error(`Sync failed: ${error.message}`);
   }
 }
