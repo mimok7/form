@@ -65,34 +65,46 @@ export const syncAPI = {
   // 구글시트 자료 동기화
   async syncSheets() {
     try {
-      const useProxy = (process.env.REACT_APP_USE_PROXY === 'true') || 
-        (typeof window !== 'undefined' && !/^https?:\/\/(localhost|127\.0\.0\.1)(:|$)/.test(window.location.origin));
-      
-      if (!useProxy) {
-        throw new Error('자료 동기화는 프록시 모드에서만 지원됩니다.');
+      const scriptUrl = process.env.REACT_APP_SHEET_APPEND_URL;
+      const token = process.env.REACT_APP_SHEET_APPEND_TOKEN;
+
+      if (!scriptUrl) {
+        throw new Error('Google Apps Script URL이 설정되지 않았습니다.');
       }
 
-      const syncUrl = '/api/sync';
-      
-      const response = await fetch(syncUrl, {
+      console.log('Calling Google Apps Script directly:', scriptUrl);
+
+      const response = await fetch(scriptUrl, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
           action: 'syncMatchingSheets',
+          token: token,
           sourceSheetId: process.env.REACT_APP_SOURCE_SHEET_ID,
           targetSheetId: process.env.REACT_APP_TARGET_SHEET_ID || process.env.REACT_APP_SHEET_ID
         })
       });
 
-      const result = await response.json();
-      
-      return {
-        success: result.success || false,
-        message: result.message || result.error || '동기화 완료',
-        log: result.log || []
-      };
+      const text = await response.text();
+      console.log('Raw response:', text);
+
+      try {
+        const result = JSON.parse(text);
+        return {
+          success: result.success || false,
+          message: result.message || result.error || '동기화 완료',
+          log: result.log || []
+        };
+      } catch (parseError) {
+        console.error('JSON parse error:', parseError);
+        return {
+          success: false,
+          message: `응답 파싱 실패: ${text}`,
+          log: []
+        };
+      }
     } catch (error) {
       console.error('동기화 오류:', error);
       return {
