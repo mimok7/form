@@ -21,11 +21,11 @@ function _getProp(key, fallback) {
 
 function _setScriptPropsForDeploy() {
   const DEFAULT_SCRIPT_PROPS = {
-    'TARGET_SHEET_ID': 'YOUR_SPREADSHEET_ID',
-    'SOURCE_SHEET_ID': 'YOUR_SOURCE_SPREADSHEET_ID',
+    'TARGET_SHEET_ID': '16bKsWL_0HkZeAbOVVntSz0ehUHRGO1PoanNhFLghvEo',
+    'SOURCE_SHEET_ID': '16bKsWL_0HkZeAbOVVntSz0ehUHRGO1PoanNhFLghvEo',
   // Include both internal codes and human-friendly masters used by client reads
   'ALLOWED_SHEETS': 'SH_H,SH_T,SH_RC,SH_C,SH_R,SH_P,SH_M,hotel,car,rcar,room,tour',
-    'ALLOWED_TOKEN': 'REPLACE_WITH_GLOBAL_TOKEN',
+    'ALLOWED_TOKEN': '53fb3ceb6b44ded184cc77f5120edf6b828a5f875cc5272a58a353c969a2ed65',
     'TOKEN_CRUISE': '',
     'TOKEN_CAR': '',
     'TOKEN_RCAR': '',
@@ -144,12 +144,28 @@ function doPost(e) {
 
 function doGet(e) {
   try {
+    // Special endpoint to set up properties
+    const setup = (e && e.parameter && e.parameter.setup) ? e.parameter.setup.toString() : '';
+    if (setup === 'props') {
+      return _setScriptPropsForDeploy();
+    }
+    
     // Health/diagnostic probe: doGet?probe=tokenlen
     const probe = (e && e.parameter && e.parameter.probe) ? e.parameter.probe.toString() : '';
     if (probe === 'tokenlen') {
       const globalToken = (_getProp('ALLOWED_TOKEN', '') || '').toString();
       const hasGlobal = globalToken && globalToken.trim().length > 0;
       return _json({ success: true, probe: 'tokenlen', hasGlobal: !!hasGlobal, globalLen: hasGlobal ? globalToken.trim().length : 0, time: new Date() });
+    }
+    
+    // Properties check endpoint
+    if (probe === 'props') {
+      const props = {
+        TARGET_SHEET_ID: _getProp('TARGET_SHEET_ID', 'NOT_SET'),
+        SOURCE_SHEET_ID: _getProp('SOURCE_SHEET_ID', 'NOT_SET'),
+        ALLOWED_TOKEN: _getProp('ALLOWED_TOKEN', 'NOT_SET') ? 'SET' : 'NOT_SET'
+      };
+      return _json({ success: true, probe: 'props', properties: props, time: new Date() });
     }
 
     // If a sheet query is provided, return that sheet's values (safe: only allowed sheets)

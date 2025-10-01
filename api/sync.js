@@ -31,24 +31,81 @@ async function handler(req, res) {
   try {
     if (req.method === 'POST') {
       const targetUrl = process.env.SHEET_APPEND_URL || process.env.REACT_APP_SHEET_APPEND_URL;
-      if (!targetUrl) return res.status(500).json({ error: 'Target URL not configured' });
-
-      const incoming = req.body && typeof req.body === 'object' ? { ...req.body } : {};
-      if (!incoming.token) {
-        const serverToken = process.env.SHEET_APPEND_TOKEN || process.env.REACT_APP_SHEET_APPEND_TOKEN || '';
-        if (serverToken) incoming.token = serverToken;
+      if (!targetUrl) {
+        console.error('Target URL not configured');
+        return res.status(500).json({ error: 'Target URL not configured' });
+      }
+      
+      // Validate URL format
+      if (!targetUrl.includes('script.google.com/macros/s/') || !targetUrl.endsWith('/exec')) {
+        console.error('Invalid Google Apps Script URL format:', targetUrl);
+        return res.status(500).json({ error: 'Invalid Apps Script URL format' });
       }
 
+      const incoming = req.body && typeof req.body === 'object' ? { ...req.body } : {};
+      
+      // Debug logging
+      console.log('Sync API called with body:', JSON.stringify(incoming));
+      console.log('Target URL:', targetUrl);
+      
+      // Ensure action is set for sync operations
+      if (!incoming.action) {
+        incoming.action = 'syncMatchingSheets';
+      }
+      
+      // Add token if not present
+      if (!incoming.token) {
+        const serverToken = process.env.SHEET_APPEND_TOKEN || process.env.REACT_APP_SHEET_APPEND_TOKEN || '';
+        if (serverToken) {
+          incoming.token = serverToken;
+          console.log('Token added to request');
+        } else {
+          console.error('No token available');
+          return res.status(500).json({ error: 'No authentication token configured' });
+        }
+      }
+
+      console.log('Making request to Apps Script:', targetUrl);
+      
       const r = await fetch(targetUrl, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(incoming)
+        headers: { 
+          'Content-Type': 'application/json',
+          'User-Agent': 'Vercel-Sync-API/1.0'
+        },
+        body: JSON.stringify(incoming),
+        timeout: 30000 // 30 second timeout
       });
+      
+      console.log('Apps Script response status:', r.status);
+      console.log('Apps Script response headers:', Object.fromEntries(r.headers.entries()));
+      
       const text = await r.text();
+      console.log('Apps Script response text (first 500 chars):', text.substring(0, 500));
+      
+      // Check if response is HTML (error page)
+      if (text.trim().startsWith('<!DOCTYPE') || text.trim().startsWith('<html')) {
+        console.error('Received HTML response instead of JSON - Apps Script deployment issue');
+        return res.status(502).json({ 
+          success: false, 
+          error: 'Apps Script returned HTML error page. Please check deployment and permissions.',
+          hint: 'The Google Apps Script might not be deployed properly or permissions are missing.'
+        });
+      }
+      
       try {
-        return res.status(r.status).json(JSON.parse(text));
-      } catch (_) {
-        return res.status(r.status).send(text);
+        const jsonResult = JSON.parse(text);
+        console.log('Parsed JSON result:', jsonResult);
+        return res.status(r.status).json(jsonResult);
+      } catch (parseError) {
+        console.error('Parse error:', parseError);
+        console.error('Raw response:', text);
+        return res.status(502).json({ 
+          success: false, 
+          error: 'Apps Script response parsing failed',
+          rawResponse: text.substring(0, 200),
+          hint: 'The response from Google Apps Script is not valid JSON'
+        });
       }
     }
 

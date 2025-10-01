@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Google Apps Script 직접 테스트</title>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 800px; margin: 50px auto; padding: 20px; }
+        .section { margin: 20px 0; padding: 15px; border: 1px solid #ddd; border-radius: 5px; }
+        button { padding: 10px 20px; margin: 5px; background: #007bff; color: white; border: none; border-radius: 3px; cursor: pointer; }
+        button:hover { background: #0056b3; }
+        .result { margin-top: 10px; padding: 10px; background: #f8f9fa; border-radius: 3px; white-space: pre-wrap; }
+        .error { background: #f8d7da; color: #721c24; }
+        .success { background: #d4edda; color: #155724; }
+        .code { background: #f4f4f4; padding: 10px; border-radius: 3px; font-family: monospace; }
+    </style>
+</head>
+<body>
+    <h1>🔧 Google Apps Script 직접 연결 테스트</h1>
+    
+    <div class="section">
+        <h2>1️⃣ 기본 연결 테스트</h2>
+        <p>Google Apps Script가 응답하는지 확인합니다.</p>
+        <button onclick="testBasicConnection()">기본 연결 테스트</button>
+        <div id="basic-result" class="result" style="display: none;"></div>
+    </div>
+    
+    <div class="section">
+        <h2>2️⃣ 동기화 기능 테스트</h2>
+        <p>실제 동기화 기능을 테스트합니다.</p>
+        <button onclick="testSyncFunction()">동기화 테스트</button>
+        <div id="sync-result" class="result" style="display: none;"></div>
+    </div>
+    
+    <div class="section">
+        <h2>3️⃣ CORS 문제 해결 방법</h2>
+        <p>만약 "Failed to fetch" 오류가 발생한다면:</p>
+        <ul>
+            <li><strong>Apps Script 재배포</strong>: 새 배포로 권한 재설정</li>
+            <li><strong>액세스 권한</strong>: "모든 사용자" 설정 확인</li>
+            <li><strong>브라우저 캐시</strong>: 브라우저 새로고침 또는 시크릿 모드</li>
+        </ul>
+    </div>
+    
+    <div class="section">
+        <h2>📋 현재 설정</h2>
+        <div class="code">
+URL: https://script.google.com/macros/s/AKfycbwf6cd_1EN1RANLQYbM_0nXG3eImXgvVkwZcgQoA1UvcRgP-gYFxHRCIoM89s_crEs5/exec
+Token: 53fb3ceb6b44ded184cc77f5120edf6b828a5f875cc5272a58a353c969a2ed65
+Source Sheet ID: 16Fc6NDkQ1a-8PVtmzQQxTJv2jyeDbyPArHfmJaF13PU
+Target Sheet ID: 16bKsWL_0HkZeAbOVVntSz0ehUHRGO1PoanNhFLghvEo
+        </div>
+    </div>
+
+    <script>
+        const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwf6cd_1EN1RANLQYbM_0nXG3eImXgvVkwZcgQoA1UvcRgP-gYFxHRCIoM89s_crEs5/exec';
+        const TOKEN = '53fb3ceb6b44ded184cc77f5120edf6b828a5f875cc5272a58a353c969a2ed65';
+        
+        function showResult(elementId, text, isError = false) {
+            const element = document.getElementById(elementId);
+            element.style.display = 'block';
+            element.textContent = text;
+            element.className = `result ${isError ? 'error' : 'success'}`;
+        }
+        
+        async function testBasicConnection() {
+            try {
+                showResult('basic-result', '연결 테스트 중...', false);
+                
+                // 기본 GET 요청으로 Apps Script 응답 확인
+                const response = await fetch(SCRIPT_URL + '?probe=tokenlen', {
+                    method: 'GET',
+                    mode: 'cors'
+                });
+                
+                console.log('Basic response status:', response.status);
+                console.log('Basic response headers:', [...response.headers.entries()]);
+                
+                const result = await response.text();
+                console.log('Basic response:', result);
+                
+                try {
+                    const jsonResult = JSON.parse(result);
+                    if (jsonResult.success) {
+                        showResult('basic-result', `✅ 연결 성공!\n응답: ${JSON.stringify(jsonResult, null, 2)}`, false);
+                    } else {
+                        showResult('basic-result', `❌ Apps Script 오류: ${jsonResult.error}`, true);
+                    }
+                } catch (e) {
+                    if (result.includes('<!DOCTYPE') || result.includes('<html')) {
+                        showResult('basic-result', '❌ HTML 응답 - Apps Script 배포 권한 문제', true);
+                    } else {
+                        showResult('basic-result', `❌ JSON 파싱 실패: ${result.substring(0, 200)}`, true);
+                    }
+                }
+            } catch (error) {
+                console.error('Basic connection error:', error);
+                if (error.message.includes('Failed to fetch')) {
+                    showResult('basic-result', '❌ Failed to fetch - CORS 또는 네트워크 문제\n\n해결 방법:\n1. Apps Script 재배포\n2. 액세스 권한을 "모든 사용자"로 설정\n3. 브라우저 캐시 삭제', true);
+                } else {
+                    showResult('basic-result', `❌ 네트워크 오류: ${error.message}`, true);
+                }
+            }
+        }
+        
+        async function testSyncFunction() {
+            try {
+                showResult('sync-result', '동기화 테스트 중...', false);
+                
+                const payload = {
+                    action: 'syncMatchingSheets',
+                    sourceSheetId: '16Fc6NDkQ1a-8PVtmzQQxTJv2jyeDbyPArHfmJaF13PU',
+                    targetSheetId: '16bKsWL_0HkZeAbOVVntSz0ehUHRGO1PoanNhFLghvEo',
+                    token: TOKEN
+                };
+                
+                console.log('Sync payload:', payload);
+                
+                const response = await fetch(SCRIPT_URL, {
+                    method: 'POST',
+                    mode: 'cors',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(payload)
+                });
+                
+                console.log('Sync response status:', response.status);
+                console.log('Sync response headers:', [...response.headers.entries()]);
+                
+                const result = await response.text();
+                console.log('Sync response:', result);
+                
+                try {
+                    const jsonResult = JSON.parse(result);
+                    if (jsonResult.success) {
+                        const syncResult = jsonResult.result || jsonResult;
+                        let message = `✅ 동기화 성공!\n${syncResult.message || ''}`;
+                        if (syncResult.log && syncResult.log.length > 0) {
+                            message += `\n\n로그:\n${syncResult.log.join('\n')}`;
+                        }
+                        showResult('sync-result', message, false);
+                    } else {
+                        showResult('sync-result', `❌ 동기화 실패: ${jsonResult.error || '알 수 없는 오류'}`, true);
+                    }
+                } catch (e) {
+                    if (result.includes('<!DOCTYPE') || result.includes('<html')) {
+                        showResult('sync-result', '❌ HTML 응답 - Apps Script 배포 또는 권한 문제', true);
+                    } else {
+                        showResult('sync-result', `❌ JSON 파싱 실패: ${result.substring(0, 200)}`, true);
+                    }
+                }
+            } catch (error) {
+                console.error('Sync error:', error);
+                if (error.message.includes('Failed to fetch')) {
+                    showResult('sync-result', '❌ Failed to fetch - CORS 또는 네트워크 문제\n\n새 배포가 필요할 수 있습니다.', true);
+                } else {
+                    showResult('sync-result', `❌ 네트워크 오류: ${error.message}`, true);
+                }
+            }
+        }
+    </script>
+</body>
+</html>

@@ -11,7 +11,6 @@ import ReportTabs from './ReportTabs';
 import ReservationConfirmation from './ReservationConfirmation';
 import UserDashboard from './UserDashboard';
 import Notice from './Notice';
-import { syncAPI } from '../utils/adminAPI';
 import './AdminDashboard.css';
 
 const SERVICES = [
@@ -31,7 +30,6 @@ const SERVICES = [
 function AdminDashboard() {
   const [selectedService, setSelectedService] = useState(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [syncStatus, setSyncStatus] = useState(null); // 동기화 상태 관리
 
   // 인증 상태 확인
   useEffect(() => {
@@ -53,27 +51,6 @@ function AdminDashboard() {
   // 메인 대시보드로 돌아가기
   const handleBackToMain = () => {
     setSelectedService(null);
-  };
-
-  // 자료 동기화 핸들러
-  const handleDataSync = async () => {
-    try {
-      setSyncStatus('loading');
-      const result = await syncAPI.syncSheets();
-      if (result.success) {
-        setSyncStatus('success');
-        alert('자료 동기화가 완료되었습니다.');
-      } else {
-        setSyncStatus('error');
-        alert(`동기화 실패: ${result.message || '알 수 없는 오류'}`);
-      }
-    } catch (error) {
-      setSyncStatus('error');
-      alert(`동기화 중 오류 발생: ${error.message}`);
-    } finally {
-      // 3초 후 상태 초기화
-      setTimeout(() => setSyncStatus(null), 3000);
-    }
   };
 
   // 인증되지 않았으면 로그인 페이지 표시
@@ -275,33 +252,6 @@ function AdminDashboard() {
                   </button>
                 </li>
               ))}
-              <li style={{ marginBottom: '8px', marginTop: '16px', borderTop: '1px solid #dee2e6', paddingTop: '16px' }}>
-                <button 
-                  className="sidebar-btn"
-                  onClick={handleDataSync}
-                  disabled={syncStatus === 'loading'}
-                  style={{
-                    width: '100%',
-                    padding: '14px 14px',
-                    border: 'none',
-                    backgroundColor: syncStatus === 'loading' ? '#6c757d' : '#28a745',
-                    color: 'white',
-                    borderRadius: '6px',
-                    cursor: syncStatus === 'loading' ? 'not-allowed' : 'pointer',
-                    textAlign: 'left',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between'
-                  }}
-                >
-                  <span>
-                    🔄 자료 동기화
-                  </span>
-                  {syncStatus === 'loading' && <span>⏳</span>}
-                  {syncStatus === 'success' && <span>✅</span>}
-                  {syncStatus === 'error' && <span>❌</span>}
-                </button>
-              </li>
             </ul>
           </nav>
         </div>

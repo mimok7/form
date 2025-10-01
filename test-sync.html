@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Google Apps Script 동기화 테스트</title>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 800px; margin: 50px auto; padding: 20px; }
+        .section { margin: 20px 0; padding: 15px; border: 1px solid #ddd; border-radius: 5px; }
+        button { padding: 10px 20px; margin: 5px; background: #007bff; color: white; border: none; border-radius: 3px; cursor: pointer; }
+        button:hover { background: #0056b3; }
+        .result { margin-top: 10px; padding: 10px; background: #f8f9fa; border-radius: 3px; white-space: pre-wrap; }
+        .error { background: #f8d7da; color: #721c24; }
+        .success { background: #d4edda; color: #155724; }
+    </style>
+</head>
+<body>
+    <h1>🔧 Google Apps Script 동기화 테스트</h1>
+    
+    <div class="section">
+        <h2>1️⃣ 스크립트 속성 설정</h2>
+        <p>먼저 Google Apps Script에 필요한 속성들을 설정합니다.</p>
+        <button onclick="setupProperties()">속성 설정하기</button>
+        <div id="setup-result" class="result" style="display: none;"></div>
+    </div>
+    
+    <div class="section">
+        <h2>2️⃣ 속성 확인</h2>
+        <p>설정된 속성들이 올바른지 확인합니다.</p>
+        <button onclick="checkProperties()">속성 확인하기</button>
+        <div id="check-result" class="result" style="display: none;"></div>
+    </div>
+    
+    <div class="section">
+        <h2>3️⃣ 동기화 테스트</h2>
+        <p>실제 동기화 기능을 테스트합니다.</p>
+        <button onclick="testSync()">동기화 테스트</button>
+        <div id="sync-result" class="result" style="display: none;"></div>
+    </div>
+    
+    <div class="section">
+        <h2>📋 현재 설정</h2>
+        <p><strong>Apps Script URL:</strong> https://script.google.com/macros/s/AKfycbxdHSOMbfgXS-T111nWYO3fzvoD3YVb7_hSvjC1xAXM_we5ZAREDmpkQfFQWSQ5fEwp/exec</p>
+        <p><strong>Spreadsheet ID:</strong> 16bKsWL_0HkZeAbOVVntSz0ehUHRGO1PoanNhFLghvEo</p>
+        <p><strong>Token:</strong> 53fb3ceb6b44ded184cc77f5120edf6b828a5f875cc5272a58a353c969a2ed65</p>
+    </div>
+
+    <script>
+        const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxdHSOMbfgXS-T111nWYO3fzvoD3YVb7_hSvjC1xAXM_we5ZAREDmpkQfFQWSQ5fEwp/exec';
+        const TOKEN = '53fb3ceb6b44ded184cc77f5120edf6b828a5f875cc5272a58a353c969a2ed65';
+        
+        function showResult(elementId, text, isError = false) {
+            const element = document.getElementById(elementId);
+            element.style.display = 'block';
+            element.textContent = text;
+            element.className = `result ${isError ? 'error' : 'success'}`;
+        }
+        
+        async function setupProperties() {
+            try {
+                showResult('setup-result', '속성 설정 중...', false);
+                
+                const response = await fetch(SCRIPT_URL + '?setup=props');
+                const result = await response.text();
+                
+                console.log('Setup response:', result);
+                
+                try {
+                    const jsonResult = JSON.parse(result);
+                    if (jsonResult.success) {
+                        showResult('setup-result', `✅ 속성 설정 완료!\n설정된 속성: ${jsonResult.set.join(', ')}`, false);
+                    } else {
+                        showResult('setup-result', `❌ 속성 설정 실패: ${jsonResult.error || '알 수 없는 오류'}`, true);
+                    }
+                } catch (e) {
+                    showResult('setup-result', `❌ 응답 파싱 실패: ${result.substring(0, 200)}`, true);
+                }
+            } catch (error) {
+                showResult('setup-result', `❌ 네트워크 오류: ${error.message}`, true);
+            }
+        }
+        
+        async function checkProperties() {
+            try {
+                showResult('check-result', '속성 확인 중...', false);
+                
+                const response = await fetch(SCRIPT_URL + '?probe=props');
+                const result = await response.text();
+                
+                console.log('Check response:', result);
+                
+                try {
+                    const jsonResult = JSON.parse(result);
+                    if (jsonResult.success) {
+                        const props = jsonResult.properties;
+                        const status = `속성 확인 결과:
+TARGET_SHEET_ID: ${props.TARGET_SHEET_ID}
+SOURCE_SHEET_ID: ${props.SOURCE_SHEET_ID}
+ALLOWED_TOKEN: ${props.ALLOWED_TOKEN}`;
+                        showResult('check-result', status, false);
+                    } else {
+                        showResult('check-result', `❌ 속성 확인 실패: ${jsonResult.error || '알 수 없는 오류'}`, true);
+                    }
+                } catch (e) {
+                    showResult('check-result', `❌ 응답 파싱 실패: ${result.substring(0, 200)}`, true);
+                }
+            } catch (error) {
+                showResult('check-result', `❌ 네트워크 오류: ${error.message}`, true);
+            }
+        }
+        
+        async function testSync() {
+            try {
+                showResult('sync-result', '동기화 테스트 중...', false);
+                
+                const payload = {
+                    action: 'syncMatchingSheets',
+                    sourceSheetId: '16bKsWL_0HkZeAbOVVntSz0ehUHRGO1PoanNhFLghvEo',
+                    targetSheetId: '16bKsWL_0HkZeAbOVVntSz0ehUHRGO1PoanNhFLghvEo',
+                    token: TOKEN
+                };
+                
+                console.log('Sync payload:', payload);
+                
+                const response = await fetch(SCRIPT_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                
+                const result = await response.text();
+                console.log('Sync response:', result);
+                
+                try {
+                    const jsonResult = JSON.parse(result);
+                    if (jsonResult.success) {
+                        const syncResult = jsonResult.result || jsonResult;
+                        let message = `✅ 동기화 성공!\n${syncResult.message || ''}`;
+                        if (syncResult.log && syncResult.log.length > 0) {
+                            message += `\n\n로그:\n${syncResult.log.join('\n')}`;
+                        }
+                        showResult('sync-result', message, false);
+                    } else {
+                        showResult('sync-result', `❌ 동기화 실패: ${jsonResult.error || '알 수 없는 오류'}`, true);
+                    }
+                } catch (e) {
+                    showResult('sync-result', `❌ 응답 파싱 실패: ${result.substring(0, 200)}`, true);
+                }
+            } catch (error) {
+                showResult('sync-result', `❌ 네트워크 오류: ${error.message}`, true);
+            }
+        }
+    </script>
+</body>
+</html>
