@@ -60,7 +60,47 @@ export const sheetsAPI = {
   }
 };
 
-// 커스텀 훅: 시트 데이터 관리
+// 자료 동기화 API
+export const syncAPI = {
+  // 구글시트 자료 동기화
+  async syncSheets() {
+    try {
+      const useProxy = (process.env.REACT_APP_USE_PROXY === 'true') || 
+        (typeof window !== 'undefined' && !/^https?:\/\/(localhost|127\.0\.0\.1)(:|$)/.test(window.location.origin));
+      
+      if (!useProxy) {
+        throw new Error('자료 동기화는 프록시 모드에서만 지원됩니다.');
+      }
+
+      const syncUrl = '/api/sync';
+      
+      const response = await fetch(syncUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          action: 'syncMatchingSheets'
+        })
+      });
+
+      const result = await response.json();
+      
+      return {
+        success: result.success || false,
+        message: result.message || result.error || '동기화 완료',
+        log: result.log || []
+      };
+    } catch (error) {
+      console.error('동기화 오류:', error);
+      return {
+        success: false,
+        message: error.message,
+        log: []
+      };
+    }
+  }
+};
 export function useSheetData(sheetName) {
   const [data, setData] = useState([]);
   const [headers, setHeaders] = useState([]);
