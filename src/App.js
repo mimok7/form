@@ -17,7 +17,7 @@ function Header() {
   return (
     <header className="app-header" aria-label="홈으로 이동">
       <div className="header-inner">
-        <a href="/admin" style={{ display: 'flex', alignItems: 'center', textDecoration: 'none', color: 'inherit' }}>
+        <a href="https://stayhalong.com" style={{ display: 'flex', alignItems: 'center', textDecoration: 'none', color: 'inherit' }}>
           <img src="/logo.png" alt="스테이 하롱 트레블" className="logo" />
           <h1 className="brand">스테이 하롱 예약폼</h1>
         </a>
