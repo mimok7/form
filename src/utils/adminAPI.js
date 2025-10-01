@@ -80,7 +80,9 @@ export const syncAPI = {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          action: 'syncMatchingSheets'
+          action: 'syncMatchingSheets',
+          sourceSheetId: process.env.REACT_APP_SOURCE_SHEET_ID,
+          targetSheetId: process.env.REACT_APP_TARGET_SHEET_ID || process.env.REACT_APP_SHEET_ID
         })
       });
 

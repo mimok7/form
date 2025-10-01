@@ -22,6 +22,7 @@ function _getProp(key, fallback) {
 function _setScriptPropsForDeploy() {
   const DEFAULT_SCRIPT_PROPS = {
     'TARGET_SHEET_ID': 'YOUR_SPREADSHEET_ID',
+    'SOURCE_SHEET_ID': 'YOUR_SOURCE_SPREADSHEET_ID',
   // Include both internal codes and human-friendly masters used by client reads
   'ALLOWED_SHEETS': 'SH_H,SH_T,SH_RC,SH_C,SH_R,SH_P,SH_M,hotel,car,rcar,room,tour',
     'ALLOWED_TOKEN': 'REPLACE_WITH_GLOBAL_TOKEN',
@@ -66,6 +67,12 @@ function doPost(e) {
     if(action === 'sendReservationEmail' || body.to){
       try{
         const result = sendReservationEmail(body);
+        return _json({ success:true, result });
+      }catch(err){ return _json({ success:false, error: err && err.message ? err.message : String(err) }); }
+    }
+    if(action === 'syncMatchingSheets'){
+      try{
+        const result = syncMatchingSheets(body);
         return _json({ success:true, result });
       }catch(err){ return _json({ success:false, error: err && err.message ? err.message : String(err) }); }
     }
@@ -184,4 +191,72 @@ function sendReservationEmail(body){
   const attachment = Utilities.newBlob(html, 'text/html', filename);
   GmailApp.sendEmail(to, subject, text, { htmlBody: html, attachments: [attachment] });
   return 'sent';
+}
+
+// --- Sync Matching Sheets Function ---
+function syncMatchingSheets(body){
+  const sourceSheetId = body.sourceSheetId || _getProp('SOURCE_SHEET_ID', '');
+  const targetSheetId = body.targetSheetId || _getProp('TARGET_SHEET_ID', '');
+
+  if (!sourceSheetId || !targetSheetId) {
+    throw new Error('sourceSheetId and targetSheetId are required');
+  }
+
+  try {
+    const sourceSs = SpreadsheetApp.openById(sourceSheetId);
+    const targetSs = SpreadsheetApp.openById(targetSheetId);
+
+    const sourceSheets = sourceSs.getSheets();
+    const targetSheets = targetSs.getSheets();
+    const targetSheetNames = targetSheets.map(sheet => sheet.getName());
+
+    let syncedCount = 0;
+    let log = [];
+
+    for (const sourceSheet of sourceSheets) {
+      const sheetName = sourceSheet.getName();
+
+      // Skip log sheets and system sheets
+      if (sheetName === LOG_SHEET || sheetName.startsWith('__')) {
+        continue;
+      }
+
+      try {
+        // Check if target sheet exists
+        let targetSheet = targetSs.getSheetByName(sheetName);
+
+        if (!targetSheet) {
+          // Create new sheet if it doesn't exist
+          targetSheet = targetSs.insertSheet(sheetName);
+          log.push(`Created new sheet: ${sheetName}`);
+        } else {
+          // Clear existing data
+          targetSheet.clear();
+          log.push(`Cleared existing sheet: ${sheetName}`);
+        }
+
+        // Copy data from source to target
+        const sourceData = sourceSheet.getDataRange().getValues();
+        if (sourceData.length > 0) {
+          targetSheet.getRange(1, 1, sourceData.length, sourceData[0].length).setValues(sourceData);
+          log.push(`Copied ${sourceData.length} rows to sheet: ${sheetName}`);
+        }
+
+        syncedCount++;
+
+      } catch (sheetError) {
+        log.push(`Error syncing sheet ${sheetName}: ${sheetError.message}`);
+      }
+    }
+
+    return {
+      success: true,
+      message: `${syncedCount} sheets synchronized successfully`,
+      syncedCount: syncedCount,
+      log: log
+    };
+
+  } catch (error) {
+    throw new Error(`Sync failed: ${error.message}`);
+  }
 }
