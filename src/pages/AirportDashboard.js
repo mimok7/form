@@ -22,8 +22,6 @@ function AirportDashboard({ onBack }) {
     '경유지대기시간',
     '차량수',
     '처리',
-    '금액',
-    '합계',
     '패스트',
 
   ];
