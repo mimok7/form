@@ -876,7 +876,7 @@ export default function UserDashboard({ onBack }) {
                       <table className="card-table">
                         <tbody>
                           {Object.entries(popupMemberInfo)
-                            .filter(([, v]) => v !== '' && v !== null && v !== undefined && !['matchedCount'].includes([0]))
+                            .filter(([k, v]) => v !== '' && v !== null && v !== undefined && !['matchedCount'].includes([0]) && !['만든사람', '만든일시'].includes(k))
                             .map(([k, v]) => (
                               <tr key={k} className="card-row">
                                 <th className="card-collabel">
@@ -930,7 +930,9 @@ export default function UserDashboard({ onBack }) {
                                   <div className="card-content">
                                     <table className="card-table">
                                       <tbody>
-                                        {fields.map(({ label, value }, i) => (
+                                        {fields
+                                          .filter(({ label }) => !['만든사람', '만들일시', '환율', '미환율', '수정자', '수정일시', '단위', '금액', '합계'].includes(label))
+                                          .map(({ label, value }, i) => (
                                           <tr key={i} className="card-row">
                                             <th className="card-collabel">
                                               <svg viewBox="0 0 24 24" className="label-icon" aria-hidden>
