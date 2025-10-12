@@ -8,9 +8,7 @@ import TourDashboard from './TourDashboard';
 import HotelDashboard from './HotelDashboard';
 import SHCCDashboard from './SHCCDashboard';
 import ReportTabs from './ReportTabs';
-import ReservationConfirmation from './ReservationConfirmation';
 import UserDashboard from './UserDashboard';
-import Notice from './Notice';
 import './AdminDashboard.css';
 
 const SERVICES = [
@@ -23,8 +21,6 @@ const SERVICES = [
   { key: 'hotel', name: '호텔', component: HotelDashboard },
   { key: 'sh_cc', name: '스하차량', component: SHCCDashboard },
   { key: 'report_shcc', name: '리포트', component: ReportTabs },
-  { key: 'reservation', name: '확인서', component: ReservationConfirmation },
-  { key: 'notice', name: '안내', component: Notice },
 ];
 
 function AdminDashboard() {
