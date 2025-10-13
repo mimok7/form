@@ -19,26 +19,30 @@ const BookingGuide = ({ onContinue }) => {
       <div style={{
         background: 'rgba(255, 255, 255, 0.95)',
         backdropFilter: 'blur(10px)',
-        color: '#4a5568',
-        padding: '16px 20px',
+        color: '#2d3748',
+        padding: '20px',
         textAlign: 'center',
-        fontSize: '14px',
+        fontSize: '16px',
         fontWeight: '600',
         borderBottom: '1px solid rgba(255, 255, 255, 0.2)',
         position: 'sticky',
         top: 0,
         zIndex: 1000,
-        boxShadow: '0 2px 20px rgba(0,0,0,0.1)'
+        boxShadow: '0 2px 20px rgba(0,0,0,0.1)',
+        lineHeight: 1.6
       }}>
         <div style={{ 
           display: 'flex', 
           alignItems: 'center', 
-          justifyContent: 'center', 
-          gap: '8px',
+          justifyContent: 'center',
+          marginBottom: '8px',
           animation: 'fadeInDown 0.8s ease-out'
         }}>
-          <span style={{ fontSize: '18px' }}>📱</span>
-          <span>화면을 터치하면 예약폼으로 이동합니다</span>
+          <span style={{ fontSize: '28px' }}>🎉</span>
+        </div>
+        <div>
+          <strong>스테이하롱 예약에 감사드립니다.</strong><br />
+          아래 내용을 잘 읽어 보시고 예약을 진행 주시면 감사하겠습니다.
         </div>
       </div>
 
