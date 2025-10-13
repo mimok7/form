@@ -127,6 +127,44 @@ function ReservationForm({ formData, setFormData, headers = [], onServiceSubmitt
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleSendConfirmation = async () => {
+    if (!formData.Email || !formData.주문ID) {
+      alert('이메일과 주문ID가 필요합니다. 먼저 저장해주세요.');
+      return;
+    }
+
+    const confirmed = window.confirm('예약 확인서를 이메일로 발송하시겠습니까?');
+    if (!confirmed) return;
+
+    setLoading(true);
+    try {
+      const response = await fetch('/api/sendConfirmation', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: formData.Email,
+          orderId: formData.주문ID,
+          customerName: formData.한글이름,
+          serviceName: '예약자 정보',
+          specialRequests: formData.기타요청사항
+        })
+      });
+
+      const result = await response.json();
+      
+      if (response.ok) {
+        alert('예약 확인서가 이메일로 발송되었습니다! 📧');
+      } else {
+        throw new Error(result.error || '이메일 발송 실패');
+      }
+    } catch (error) {
+      console.error('Confirmation email error:', error);
+      alert('이메일 발송 중 오류가 발생했습니다: ' + error.message);
+    } finally {
+      setLoading(false);
+    }
   };  return (
     <div className="customer-info">
       <style>{`
@@ -268,7 +306,25 @@ function ReservationForm({ formData, setFormData, headers = [], onServiceSubmitt
           <button
             type="button"
             style={{
-              backgroundColor: '#007bff',
+              backgroundColor: '#28a745',
+              color: '#fff',
+              border: 'none',
+              borderRadius: '6px',
+              padding: '10px 18px',
+              fontSize: '1.1rem',
+              cursor: 'pointer',
+              fontWeight: 'bold',
+              boxShadow: '0 2px 6px rgba(0,0,0,0.08)'
+            }}
+            onClick={handleSendConfirmation}
+            disabled={loading || !formData.Email || !formData.주문ID}
+          >
+            📧 확인서 발송
+          </button>
+          <button
+            type="button"
+            style={{
+              backgroundColor: '#6c757d',
               color: '#fff',
               border: 'none',
               borderRadius: '6px',
