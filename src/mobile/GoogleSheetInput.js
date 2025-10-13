@@ -259,6 +259,52 @@ function MobileBookingForm() {
     }
   };
 
+  const handleSendConfirmation = async () => {
+    if (!formData.email || !formData.orderId) {
+      alert('이메일과 주문ID가 필요합니다. 먼저 저장해주세요.');
+      return;
+    }
+
+    const confirmed = window.confirm('예약 확인서를 이메일로 발송하시겠습니까?');
+    if (!confirmed) return;
+
+    setLoading(true);
+    try {
+      const response = await fetch('/api/sendConfirmation', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: formData.email,
+          orderId: formData.orderId,
+          customerName: formData.customerName || formData.한글이름 || formData.koreanName,
+          checkInDate: formData.checkInDate || formData.체크인,
+          checkOutDate: formData.checkOutDate || formData.체크아웃,
+          adults: formData.adults,
+          children: formData.children,
+          serviceName: services.find(s => s.id === selectedService)?.name,
+          specialRequests: formData.specialRequests || formData.기타요청사항
+        })
+      });
+
+      const result = await response.json();
+      
+      if (response.ok) {
+        alert('예약 확인서가 이메일로 발송되었습니다! 📧\n예약이 완료되었습니다.');
+        // 예약 완료 후 초기화
+        setFormData({});
+        setCurrentStep(0);
+        setSelectedService('');
+      } else {
+        throw new Error(result.error || '이메일 발송 실패');
+      }
+    } catch (error) {
+      console.error('Confirmation email error:', error);
+      alert('이메일 발송 중 오류가 발생했습니다: ' + error.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const isStepValid = () => {
     switch (currentStep) {
       case 0: return selectedService !== '';
@@ -350,6 +396,40 @@ function MobileBookingForm() {
                 </div>
               ))}
             </div>
+            
+            {Object.values(submitted).some(val => val) && (
+              <div style={{ 
+                display: 'flex', 
+                justifyContent: 'center',
+                marginTop: '32px',
+                paddingTop: '24px',
+                borderTop: '1px solid rgba(0,0,0,0.1)'
+              }}>
+                <button
+                  onClick={handleSendConfirmation}
+                  disabled={loading}
+                  style={{
+                    backgroundColor: loading ? '#95a5a6' : '#28a745',
+                    color: '#fff',
+                    border: 'none',
+                    borderRadius: '8px',
+                    padding: '16px 48px',
+                    fontSize: '18px',
+                    fontWeight: 'bold',
+                    cursor: loading ? 'not-allowed' : 'pointer',
+                    boxShadow: '0 4px 12px rgba(40, 167, 69, 0.3)',
+                    transition: 'all 0.3s ease',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '8px'
+                  }}
+                  onMouseOver={(e) => !loading && (e.target.style.transform = 'translateY(-2px)')}
+                  onMouseOut={(e) => e.target.style.transform = 'translateY(0)'}
+                >
+                  {loading ? '처리중...' : '✅ 예약완료'}
+                </button>
+              </div>
+            )}
           </div>
         )}
 
@@ -463,6 +543,56 @@ function MobileBookingForm() {
                   <div className="special-requests">{formData.specialRequests}</div>
                 </div>
               )}
+            </div>
+            
+            <div style={{ 
+              display: 'flex', 
+              gap: '12px', 
+              marginTop: '24px',
+              justifyContent: 'center'
+            }}>
+              <button
+                onClick={() => setCurrentStep(currentStep - 1)}
+                style={{
+                  backgroundColor: '#6c757d',
+                  color: '#fff',
+                  border: 'none',
+                  borderRadius: '8px',
+                  padding: '16px 32px',
+                  fontSize: '16px',
+                  fontWeight: 'bold',
+                  cursor: 'pointer',
+                  boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+                  transition: 'all 0.3s ease'
+                }}
+                onMouseOver={(e) => e.target.style.transform = 'translateY(-2px)'}
+                onMouseOut={(e) => e.target.style.transform = 'translateY(0)'}
+              >
+                ← 이전
+              </button>
+              <button
+                onClick={handleSendConfirmation}
+                disabled={loading}
+                style={{
+                  backgroundColor: loading ? '#95a5a6' : '#28a745',
+                  color: '#fff',
+                  border: 'none',
+                  borderRadius: '8px',
+                  padding: '16px 48px',
+                  fontSize: '18px',
+                  fontWeight: 'bold',
+                  cursor: loading ? 'not-allowed' : 'pointer',
+                  boxShadow: '0 4px 12px rgba(40, 167, 69, 0.3)',
+                  transition: 'all 0.3s ease',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px'
+                }}
+                onMouseOver={(e) => !loading && (e.target.style.transform = 'translateY(-2px)')}
+                onMouseOut={(e) => e.target.style.transform = 'translateY(0)'}
+              >
+                {loading ? '처리중...' : '✅ 예약완료'}
+              </button>
             </div>
           </div>
         )}
