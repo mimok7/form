@@ -181,50 +181,50 @@ const BookingGuide = ({ onContinue }) => {
             <div style={{
               display: 'flex',
               flexDirection: 'column',
-              gap: '24px'
+              gap: '16px'
             }}>
               {/* 1단계 */}
               <div style={{
                 display: 'flex',
                 alignItems: 'center',
                 background: '#f8f9fa',
-                borderRadius: '16px',
-                padding: '20px',
+                borderRadius: '12px',
+                padding: '12px 16px',
                 border: '2px solid #e9ecef',
                 position: 'relative'
               }}>
                 <div style={{
                   background: 'linear-gradient(135deg, #667eea, #764ba2)',
                   color: 'white',
-                  borderRadius: '12px',
-                  width: '60px',
-                  height: '60px',
+                  borderRadius: '8px',
+                  width: '45px',
+                  height: '45px',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
                   fontWeight: 'bold',
-                  fontSize: '14px',
-                  marginRight: '16px',
+                  fontSize: '11px',
+                  marginRight: '12px',
                   flexShrink: 0,
-                  boxShadow: '0 4px 15px rgba(102, 126, 234, 0.3)'
+                  boxShadow: '0 2px 10px rgba(102, 126, 234, 0.3)'
                 }}>
                   1단계
                 </div>
                 <div style={{ flex: 1 }}>
                   <div style={{ 
-                    fontSize: '40px', 
-                    marginBottom: '8px',
+                    fontSize: '28px', 
+                    marginBottom: '4px',
                     textAlign: 'center'
                   }}>✏️</div>
                   <div style={{ 
                     fontWeight: 'bold', 
                     color: '#2d3748', 
-                    fontSize: '16px',
+                    fontSize: '14px',
                     textAlign: 'center',
-                    marginBottom: '4px'
+                    marginBottom: '2px'
                   }}>신청서 작성</div>
                   <div style={{
-                    fontSize: '12px',
+                    fontSize: '11px',
                     color: '#718096',
                     textAlign: 'center'
                   }}>예약 정보를 입력해주세요</div>
@@ -234,9 +234,9 @@ const BookingGuide = ({ onContinue }) => {
               {/* 화살표 */}
               <div style={{ 
                 textAlign: 'center', 
-                fontSize: '24px', 
+                fontSize: '18px', 
                 color: '#a0aec0',
-                margin: '-12px 0'
+                margin: '-8px 0'
               }}>↓</div>
 
               {/* 2단계 */}
@@ -244,42 +244,42 @@ const BookingGuide = ({ onContinue }) => {
                 display: 'flex',
                 alignItems: 'center',
                 background: '#f8f9fa',
-                borderRadius: '16px',
-                padding: '20px',
+                borderRadius: '12px',
+                padding: '12px 16px',
                 border: '2px solid #e9ecef'
               }}>
                 <div style={{
                   background: 'linear-gradient(135deg, #48bb78, #38a169)',
                   color: 'white',
-                  borderRadius: '12px',
-                  width: '60px',
-                  height: '60px',
+                  borderRadius: '8px',
+                  width: '45px',
+                  height: '45px',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
                   fontWeight: 'bold',
-                  fontSize: '14px',
-                  marginRight: '16px',
+                  fontSize: '11px',
+                  marginRight: '12px',
                   flexShrink: 0,
-                  boxShadow: '0 4px 15px rgba(72, 187, 120, 0.3)'
+                  boxShadow: '0 2px 10px rgba(72, 187, 120, 0.3)'
                 }}>
                   2단계
                 </div>
                 <div style={{ flex: 1 }}>
                   <div style={{ 
-                    fontSize: '40px', 
-                    marginBottom: '8px',
+                    fontSize: '28px', 
+                    marginBottom: '4px',
                     textAlign: 'center'
                   }}>💬</div>
                   <div style={{ 
                     fontWeight: 'bold', 
                     color: '#2d3748', 
-                    fontSize: '16px',
+                    fontSize: '14px',
                     textAlign: 'center',
-                    marginBottom: '4px'
+                    marginBottom: '2px'
                   }}>최종견적 전달</div>
                   <div style={{
-                    fontSize: '12px',
+                    fontSize: '11px',
                     color: '#718096',
                     textAlign: 'center'
                   }}>상담을 통해 견적을 확인하세요</div>
@@ -289,9 +289,9 @@ const BookingGuide = ({ onContinue }) => {
               {/* 화살표 */}
               <div style={{ 
                 textAlign: 'center', 
-                fontSize: '24px', 
+                fontSize: '18px', 
                 color: '#a0aec0',
-                margin: '-12px 0'
+                margin: '-8px 0'
               }}>↓</div>
 
               {/* 3단계 */}
@@ -299,42 +299,42 @@ const BookingGuide = ({ onContinue }) => {
                 display: 'flex',
                 alignItems: 'center',
                 background: '#f8f9fa',
-                borderRadius: '16px',
-                padding: '20px',
+                borderRadius: '12px',
+                padding: '12px 16px',
                 border: '2px solid #e9ecef'
               }}>
                 <div style={{
                   background: 'linear-gradient(135deg, #ed8936, #dd6b20)',
                   color: 'white',
-                  borderRadius: '12px',
-                  width: '60px',
-                  height: '60px',
+                  borderRadius: '8px',
+                  width: '45px',
+                  height: '45px',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
                   fontWeight: 'bold',
-                  fontSize: '14px',
-                  marginRight: '16px',
+                  fontSize: '11px',
+                  marginRight: '12px',
                   flexShrink: 0,
-                  boxShadow: '0 4px 15px rgba(237, 137, 54, 0.3)'
+                  boxShadow: '0 2px 10px rgba(237, 137, 54, 0.3)'
                 }}>
                   3단계
                 </div>
                 <div style={{ flex: 1 }}>
                   <div style={{ 
-                    fontSize: '40px', 
-                    marginBottom: '8px',
+                    fontSize: '28px', 
+                    marginBottom: '4px',
                     textAlign: 'center'
                   }}>💳</div>
                   <div style={{ 
                     fontWeight: 'bold', 
                     color: '#2d3748', 
-                    fontSize: '16px',
+                    fontSize: '14px',
                     textAlign: 'center',
-                    marginBottom: '4px'
+                    marginBottom: '2px'
                   }}>결제진행</div>
                   <div style={{
-                    fontSize: '12px',
+                    fontSize: '11px',
                     color: '#718096',
                     textAlign: 'center'
                   }}>안전하게 결제를 완료하세요</div>
