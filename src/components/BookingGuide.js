@@ -35,14 +35,13 @@ const BookingGuide = ({ onContinue }) => {
           display: 'flex', 
           alignItems: 'center', 
           justifyContent: 'center',
-          marginBottom: '8px',
           animation: 'fadeInDown 0.8s ease-out'
         }}>
-          <span style={{ fontSize: '28px' }}>🎉</span>
-        </div>
-        <div>
-          <strong>스테이하롱 예약에 감사드립니다.</strong><br />
-          아래 내용을 잘 읽어 보시고 예약을 진행 주시면 감사하겠습니다.
+          <span style={{ fontSize: '28px', marginRight: '12px' }}>🎉</span>
+          <span>
+            <strong>스테이하롱 예약에 감사드립니다.</strong><br />
+            아래 내용을 잘 읽어 보시고 예약을 진행 주시면 감사하겠습니다.
+          </span>
         </div>
       </div>
 
