@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>예약 진행과정 및 안내사항 - 스테이하롱</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Malgun Gothic', Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background-color: #f5f5f5;
+        }
+        
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        .section {
+            margin-bottom: 0;
+        }
+        
+        .section-header {
+            background: linear-gradient(135deg, #4a90e2, #357abd);
+            color: white;
+            padding: 20px;
+            display: flex;
+            align-items: center;
+            font-size: 20px;
+            font-weight: bold;
+        }
+        
+        .section-header::before {
+            content: "👆";
+            margin-right: 10px;
+            font-size: 24px;
+        }
+        
+        .section-content {
+            padding: 30px;
+            background: white;
+        }
+        
+        /* 예약 진행과정 */
+        .process-steps {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin: 20px 0;
+        }
+        
+        .step {
+            text-align: center;
+            flex: 1;
+            position: relative;
+            min-width: 150px;
+            padding: 0 15px;
+        }
+        
+        .step:not(:last-child)::after {
+            content: "❯";
+            position: absolute;
+            right: -15px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 24px;
+            color: #666;
+            z-index: 1;
+        }
+        
+        .step-icon {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            background: #f0f8ff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 10px;
+            font-size: 40px;
+            border: 3px solid #4a90e2;
+        }
+        
+        .step-number {
+            background: #4a90e2;
+            color: white;
+            border-radius: 25px;
+            width: 80px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 16px;
+            margin: 0 auto 10px;
+        }
+        
+        .step-title {
+            font-weight: bold;
+            color: #4a90e2;
+            margin-bottom: 5px;
+            font-size: 16px;
+        }
+        
+        .step-desc {
+            font-size: 14px;
+            color: #666;
+            font-weight: 500;
+        }
+        
+        /* 결제기한 안내 */
+        .time-info {
+            display: flex;
+            align-items: center;
+            margin: 20px 0;
+        }
+        
+        .time-icon {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            background: #f0f0f0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 30px;
+            position: relative;
+            border: 8px solid #333;
+        }
+        
+        .time-icon::before {
+            content: "2";
+            font-size: 48px;
+            font-weight: bold;
+        }
+        
+        .time-icon::after {
+            content: "HOURS";
+            position: absolute;
+            bottom: 15px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+        
+        .time-content h3 {
+            color: #4a90e2;
+            margin-bottom: 10px;
+            font-size: 18px;
+        }
+        
+        .time-content p {
+            margin-bottom: 10px;
+            line-height: 1.5;
+        }
+        
+        .highlight {
+            color: #4a90e2;
+            font-weight: bold;
+        }
+        
+        /* 여권정보 안내 */
+        .passport-info {
+            display: flex;
+            align-items: flex-start;
+            margin: 20px 0;
+        }
+        
+        .passport-icon {
+            width: 100px;
+            height: 140px;
+            background: #1e5f99;
+            border-radius: 8px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            margin-right: 30px;
+            color: white;
+            position: relative;
+        }
+        
+        .passport-icon::before {
+            content: "🌐";
+            font-size: 40px;
+            margin-bottom: 10px;
+        }
+        
+        .passport-icon::after {
+            content: "PASSPORT";
+            font-size: 12px;
+            font-weight: bold;
+            position: absolute;
+            bottom: 15px;
+        }
+        
+        .passport-content p {
+            margin-bottom: 15px;
+            line-height: 1.6;
+        }
+        
+        /* 정보 오기재 주의 */
+        .warning-info {
+            display: flex;
+            align-items: flex-start;
+            margin: 20px 0;
+        }
+        
+        .warning-icon {
+            width: 120px;
+            height: 80px;
+            background: #4a90e2;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 30px;
+            color: white;
+            font-size: 14px;
+            text-align: center;
+            line-height: 1.2;
+        }
+        
+        .warning-content h3 {
+            color: #4a90e2;
+            margin-bottom: 10px;
+            font-size: 18px;
+        }
+        
+        .warning-content p {
+            margin-bottom: 10px;
+            line-height: 1.6;
+        }
+        
+        /* 이메일 정보 수집 안내 - 제거됨 */
+        
+        @media (max-width: 768px) {
+            .container {
+                margin: 0;
+                box-shadow: none;
+            }
+            
+            .section-content {
+                padding: 20px;
+            }
+            
+            .process-steps {
+                flex-direction: column;
+                gap: 20px;
+            }
+            
+            .step:not(:last-child)::after {
+                content: "↓";
+                right: 50%;
+                transform: translateX(50%);
+                top: 100%;
+            }
+            
+            .time-info,
+            .passport-info,
+            .warning-info {
+                flex-direction: column;
+                text-align: center;
+            }
+            
+            .time-icon,
+            .passport-icon {
+                margin: 0 auto 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- 예약자의 이메일정보 수집안내 -->
+        <div class="section">
+            <div class="section-header">
+                예약자의 이메일정보 수집안내
+            </div>
+            <div class="section-content">
+                <p style="margin-bottom: 20px; font-weight: 500; line-height: 1.6;">
+                    스테이하롱은 아래와 같은 경우에 한하여 고객의 이메일 정보를 사용할 수 있습니다.
+                </p>
+                <ul style="margin-left: 20px; margin-bottom: 20px; line-height: 1.8;">
+                    <li style="margin-bottom: 10px;">예약확인서의 이메일 발송</li>
+                    <li style="margin-bottom: 10px;">긴급한 정보전달, 국가재난 공문의 사본 발송 등</li>
+                    <li style="margin-bottom: 10px;">신용카드 결제정보 입력에 따른 "고객의 이메일 주소" 기재란</li>
+                    <li style="margin-bottom: 10px;">이 외 어떠한 경우에도 스테이하롱트래블은 고객의 이메일 주소를 사용하지 않습니다.</li>
+                </ul>
+                <p style="background: #fff3cd; border: 1px solid #ffeaa7; border-radius: 4px; padding: 15px; font-weight: 500; color: #856404; text-align: center;">
+                    위의 내용을 숙지하시고 예약을 진행해 주시기 바랍니다.
+                </p>
+            </div>
+        </div>
+
+        <!-- 예약신청 진행과정 -->
+        <div class="section">
+            <div class="section-header">
+                예약신청 진행과정
+            </div>
+            <div class="section-content">
+                <div class="process-steps">
+                    <div class="step">
+                        <div class="step-number">1단계</div>
+                        <div class="step-icon">✏️</div>
+                        <div class="step-title">신청서 작성</div>
+                    </div>
+                    <div class="step">
+                        <div class="step-number">2단계</div>
+                        <div class="step-icon">💬</div>
+                        <div class="step-title">최종견적 전달</div>
+                    </div>
+                    <div class="step">
+                        <div class="step-number">3단계</div>
+                        <div class="step-icon">💳</div>
+                        <div class="step-title">결제진행</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 결제기한에 대한 안내 -->
+        <div class="section">
+            <div class="section-header">
+                결제기한에 대한 안내
+            </div>
+            <div class="section-content">
+                <div class="time-info">
+                    <div class="time-icon"></div>
+                    <div class="time-content">
+                        <h3>결제기한은 2시간 이내</h3>
+                        <p>크루즈는 2시간 이상, 숙박이나 부킹 Lock을 지정 해 주지 않습니다.</p>
+                        <p><span class="highlight">2시간 이내 결제가 불가능한 경우</span></p>
+                        <p>2시간 이내 결제가 어려우신 경우, 반드시 스테이하롱에 말씀 해 주세요.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 여권정보 제출의 필수 안내 -->
+        <div class="section">
+            <div class="section-header">
+                여권정보 제출의 필수 안내
+            </div>
+            <div class="section-content">
+                <div class="passport-info">
+                    <div class="passport-icon"></div>
+                    <div class="passport-content">
+                        <p><span class="highlight">여권은 바르게 표시 후 카톡 상담방으로 보내주세요.</span></p>
+                        <p>크루즈는 승선인원에 대한 여권사본, 승객정보를 정부에 등록해야 합니다.</p>
+                        <p>따라서 크루즈에 승선하는 모든 승객에 대한 여권사본을</p>
+                        <p>당사로 보내주셔야 하며, 관련 상세한 안내는 스테이하롱에서 전담드린</p>
+                        <p>안내 메시지 내 관련링크에서 확인하실 수 있습니다.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 정보 오기재 주의 -->
+        <div class="section">
+            <div class="section-header">
+                정보 오기재 주의
+            </div>
+            <div class="section-content">
+                <div class="warning-info">
+                    <div class="warning-icon">
+                        📋<br>신청서
+                    </div>
+                    <div class="warning-content">
+                        <h3>신청서 제출 전 다시한번 꼭! 확인 해 주세요!</h3>
+                        <p>모든 부분은 신청서에 기재 된 내용으로만 진행 됩니다.</p>
+                        <p>반드시 반영을 원하시는 부분 (카톡물음 등)은 체팅 시 말씀 주셔터라도</p>
+                        <p>기저 요청사항에 반드시 기재 해 주시고,</p>
+                        <p>정보가 잘못 입력 된 부분이 없는지 꼭 한번 더 확인 후 제출 해 주세요.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

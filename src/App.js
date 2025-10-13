@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import AdminDashboard from './pages/AdminDashboard';
 import CruiseDashboard from './pages/CruiseDashboard';
@@ -11,6 +11,7 @@ import AlertProvider from './mobile/components/CustomAlert';
 import ReservationConfirmation from './pages/ReservationConfirmation';
 import Notice from './pages/Notice';
 import MobileBookingForm from './mobile/GoogleSheetInput';
+import BookingGuide from './components/BookingGuide';
 import './MobileBookingForm.css';
 
 function Header() {
@@ -27,6 +28,29 @@ function Header() {
 }
 
 function App() {
+  const [showGuide, setShowGuide] = useState(false);
+
+  // 컴포넌트 마운트 시 안내 페이지 표시 여부 확인
+  useEffect(() => {
+    const hasSeenGuide = sessionStorage.getItem('hasSeenBookingGuide');
+    if (!hasSeenGuide) {
+      setShowGuide(true);
+    }
+  }, []);
+
+  const handleContinueFromGuide = () => {
+    sessionStorage.setItem('hasSeenBookingGuide', 'true');
+    setShowGuide(false);
+  };
+
+  // 안내 페이지를 표시하는 경우
+  if (showGuide) {
+    return (
+      <AlertProvider siteName={process.env.REACT_APP_SITE_NAME || '스테이 하롱 트레블'}>
+        <BookingGuide onContinue={handleContinueFromGuide} />
+      </AlertProvider>
+    );
+  }
 
   return (
     <Router future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
