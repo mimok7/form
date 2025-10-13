@@ -366,27 +366,6 @@ const BookingGuide = ({ onContinue }) => {
             결제기한에 대한 안내
           </div>
           <div style={{ padding: '24px 20px' }}>
-            <div style={{
-              background: 'linear-gradient(135deg, #fed7d7, #feb2b2)',
-              borderRadius: '16px',
-              padding: '20px',
-              textAlign: 'center',
-              marginBottom: '20px',
-              border: '2px solid #fc8181'
-            }}>
-              <div style={{
-                fontSize: '48px',
-                fontWeight: 'bold',
-                color: '#c53030',
-                marginBottom: '8px'
-              }}>2</div>
-              <div style={{
-                fontSize: '14px',
-                fontWeight: 'bold',
-                color: '#742a2a',
-                letterSpacing: '1px'
-              }}>HOURS</div>
-            </div>
             <div style={{ textAlign: 'center' }}>
               <h3 style={{ 
                 color: '#2d3748', 
@@ -448,22 +427,6 @@ const BookingGuide = ({ onContinue }) => {
           </div>
           <div style={{ padding: '24px 20px' }}>
             <div style={{
-              background: 'linear-gradient(135deg, #bee3f8, #90cdf4)',
-              borderRadius: '16px',
-              padding: '20px',
-              textAlign: 'center',
-              marginBottom: '20px',
-              border: '2px solid #63b3ed'
-            }}>
-              <div style={{ fontSize: '48px', marginBottom: '8px' }}>🌐</div>
-              <div style={{
-                fontSize: '12px',
-                fontWeight: 'bold',
-                color: '#2c5282',
-                letterSpacing: '1px'
-              }}>PASSPORT</div>
-            </div>
-            <div style={{
               background: '#ebf8ff',
               borderRadius: '12px',
               padding: '20px',
@@ -510,22 +473,6 @@ const BookingGuide = ({ onContinue }) => {
             정보 오기재 주의
           </div>
           <div style={{ padding: '24px 20px' }}>
-            <div style={{
-              background: 'linear-gradient(135deg, #fed7d7, #feb2b2)',
-              borderRadius: '16px',
-              padding: '20px',
-              textAlign: 'center',
-              marginBottom: '20px',
-              border: '2px solid #fc8181'
-            }}>
-              <div style={{ fontSize: '48px', marginBottom: '8px' }}>📋</div>
-              <div style={{
-                fontSize: '12px',
-                fontWeight: 'bold',
-                color: '#742a2a',
-                letterSpacing: '1px'
-              }}>신청서</div>
-            </div>
             <div style={{
               background: '#fff5f5',
               borderRadius: '12px',
