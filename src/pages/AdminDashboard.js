@@ -10,11 +10,13 @@ import SHCCDashboard from './SHCCDashboard';
 import ReportTabs from './ReportTabs';
 import ReservationConfirmation from './ReservationConfirmation';
 import UserDashboard from './UserDashboard';
+import UsageDateDashboard from './UsageDateDashboard';
 import Notice from './Notice';
 import './AdminDashboard.css';
 
 const SERVICES = [
   { key: 'user', name: '예약일별', component: UserDashboard },
+  { key: 'usage_date', name: '사용일별', component: UsageDateDashboard },
   { key: 'cruise', name: '크루즈', component: CruiseDashboard },
   { key: 'car', name: '차량', component: CarDashboard },
   { key: 'airport', name: '공항', component: AirportDashboard },
