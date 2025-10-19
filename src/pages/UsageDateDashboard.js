@@ -138,7 +138,7 @@ function UsageDateDashboard({ onBack }) {
           dateMap.set(dateKey, []);
         }
 
-        const memberInfo = getMemberInfo(orderId);
+        const memberInfo = getMemberInfo ? getMemberInfo(orderId) : null;
         const customerName = memberInfo?.koreanName || '';
 
         // 행 데이터를 객체로 변환
@@ -169,13 +169,14 @@ function UsageDateDashboard({ onBack }) {
       result.set(dateKey, dateMap.get(dateKey));
     });
 
+    return result;
   }, [SH_M_data, SH_M_headers, SH_R_data, SH_R_headers, SH_C_data, SH_C_headers, 
       SH_CC_data, SH_CC_headers, SH_P_data, SH_P_headers, SH_H_data, SH_H_headers, 
       SH_T_data, SH_T_headers, SH_RC_data, SH_RC_headers, getMemberInfo]);
 
   // 날짜 범위 내의 예약 데이터
   const dateRangeReservations = useMemo(() => {
-    if (!startDate || !endDate) return [];
+    if (!startDate || !endDate || !reservationsByDate) return [];
     
     const allReservations = [];
     const start = new Date(startDate);
@@ -271,7 +272,7 @@ function UsageDateDashboard({ onBack }) {
 
   // 사용 가능한 날짜 목록
   const availableDates = useMemo(() => {
-    return Array.from(reservationsByDate.keys());
+    return reservationsByDate ? Array.from(reservationsByDate.keys()) : [];
   }, [reservationsByDate]);
 
   // 예약 카드 렌더링 (간단한 스타일)
