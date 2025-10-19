@@ -77,6 +77,17 @@ function AdminDashboard() {
         <div className="service-menu">
           <h2>🛠️ 서비스 관리</h2>
           <p>관리할 서비스를 선택하세요</p>
+          <div style={{
+            backgroundColor: '#FEF3C7',
+            border: '1px solid #F59E0B',
+            borderRadius: '6px',
+            padding: '12px',
+            marginBottom: '16px',
+            fontSize: '0.875rem',
+            color: '#92400E'
+          }}>
+            ⚠️ 데이터가 정확하지 않을 수 있음. 정확한 데이터는 추가 작업을 해야 함
+          </div>
           <div className="service-grid">
             {SERVICES.map(service => (
               <div
