@@ -95,7 +95,7 @@ function AdminDashboard() {
                   {service.key === 'report_shcc' && '📊'}
                   {service.key === 'reservation' && '📄'}
                   {service.key === 'notice' && 'ℹ️'}
-                  {service.key === 'sh_sp' && '🚌'}
+                  {service.key === 'usage_date' && '📅'}
                   {service.key === 'user' && (
                     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                       <path d="M12 12c2.761 0 5-2.239 5-5s-2.239-5-5-5-5 2.239-5 5 2.239 5 5 5z" fill="#4a5568"/>
@@ -250,6 +250,7 @@ function AdminDashboard() {
                     {service.key === 'report_shcc' && '📊'}
                     {service.key === 'reservation' && '📄'}
                     {service.key === 'notice' && 'ℹ️'}
+                    {service.key === 'usage_date' && '📅'}
                     {service.key === 'user' && '👤'} {service.name}
                   </button>
                 </li>

@@ -110,4 +110,115 @@ module.exports = function(app) {
       res.status(500).json({ error: err.message || 'internal error' });
     }
   });
+
+  // Schedule/Google Sheets endpoint
+  app.use('/api/schedule', (req, _res, next) => {
+    console.log(`[setupProxy] hit /api/schedule ${req.method} ${req.url}`);
+    next();
+  });
+
+  app.get('/api/schedule/google-sheets', async (req, res) => {
+    try {
+      const type = req.query.type || 'all';
+      console.log('[setupProxy] /api/schedule/google-sheets called with type:', type);
+
+      // Demo data for development
+      const demoDataByType = {
+        cruise: [
+          {
+            orderId: 'CRS001',
+            customerName: '김철수',
+            customerEnglishName: 'Kim Chulsu',
+            checkin: new Date().toLocaleDateString('ko-KR', { year: 'numeric', month: '2-digit', day: '2-digit' }).replace(/\./g, '. '),
+            cruise: 'Caribbean Princess',
+            roomType: '발코니 스위트',
+            adult: 2
+          }
+        ],
+        car: [
+          {
+            orderId: 'CAR001',
+            customerName: '이영희',
+            customerEnglishName: 'Lee Younghee',
+            pickupDatetime: new Date().toLocaleDateString('ko-KR', { year: 'numeric', month: '2-digit', day: '2-digit' }).replace(/\./g, '. '),
+            carType: '에쿠스',
+            pickupLocation: '인천공항',
+            dropoffLocation: '명동호텔'
+          }
+        ],
+        vehicle: [
+          {
+            orderId: 'VEH001',
+            customerName: '박민수',
+            customerEnglishName: 'Park Minsu',
+            boardingDate: new Date().toLocaleDateString('ko-KR', { year: 'numeric', month: '2-digit', day: '2-digit' }).replace(/\./g, '. '),
+            vehicleNumber: 'SH001',
+            seatNumber: 'A1',
+            category: '공항',
+            pickupLocation: '인천공항 터미널 1'
+          }
+        ],
+        airport: [
+          {
+            orderId: 'AIR001',
+            customerName: '최지윤',
+            customerEnglishName: 'Choi Jiyoon',
+            date: new Date().toLocaleDateString('ko-KR', { year: 'numeric', month: '2-digit', day: '2-digit' }).replace(/\./g, '. '),
+            airportName: '인천공항',
+            flightNumber: 'OZ123',
+            time: '10:00'
+          }
+        ],
+        hotel: [
+          {
+            orderId: 'HTL001',
+            customerName: '정현주',
+            customerEnglishName: 'Jung Hyunjoo',
+            checkinDate: new Date().toLocaleDateString('ko-KR', { year: 'numeric', month: '2-digit', day: '2-digit' }).replace(/\./g, '. '),
+            hotelName: 'Hotel Lotte Seoul',
+            roomName: '디럭스 더블',
+            days: 3
+          }
+        ],
+        tour: [
+          {
+            orderId: 'TOR001',
+            customerName: '강민정',
+            customerEnglishName: 'Kang Minjeong',
+            startDate: new Date().toLocaleDateString('ko-KR', { year: 'numeric', month: '2-digit', day: '2-digit' }).replace(/\./g, '. '),
+            tourName: 'DMZ 투어',
+            tourType: '당일투어',
+            participants: 4
+          }
+        ],
+        rentcar: [
+          {
+            orderId: 'RNT001',
+            customerName: '홍길동',
+            customerEnglishName: 'Hong Gildong',
+            pickupDate: new Date().toLocaleDateString('ko-KR', { year: 'numeric', month: '2-digit', day: '2-digit' }).replace(/\./g, '. '),
+            carType: '쏘나타',
+            pickupTime: '08:00',
+            usagePeriod: '3일'
+          }
+        ]
+      };
+
+      if (type === 'all') {
+        // Combine all data types
+        const allData = [];
+        Object.values(demoDataByType).forEach(typeData => {
+          allData.push(...typeData);
+        });
+        return res.status(200).json({ success: true, data: allData });
+      } else if (demoDataByType[type]) {
+        return res.status(200).json({ success: true, data: demoDataByType[type] });
+      } else {
+        return res.status(200).json({ success: true, data: [] });
+      }
+    } catch (err) {
+      console.error('[setupProxy] Schedule error:', err);
+      res.status(500).json({ success: false, error: err.message || 'internal error' });
+    }
+  });
 };

@@ -1,841 +1,747 @@
-'use client';
+import React, { useState, useMemo } from 'react';
+import { useSheetData } from '../utils/adminAPI';
+import './AdminDashboard.css';
 
-import React, { useState, useEffect } from 'react';
-import {
-  Calendar,
-  Clock,
-  Ship,
-  Plane,
-  Building,
-  MapPin,
-  Car,
-  Filter,
-  ChevronLeft,
-  ChevronRight
-} from 'lucide-react';
+// 서비스 정의
+const SERVICES = [
+  { key: 'cruise', name: '크루즈', sheet: 'SH_R', icon: '🚢', color: '#3B82F6', dateField: '체크인' },
+  { key: 'vehicle', name: '차량', sheet: 'SH_C', icon: '🚗', color: '#A855F7', dateField: '승차일시' },
+  { key: 'car', name: '스하차량', sheet: 'SH_CC', icon: '🚙', color: '#F59E0B', dateField: '승차일' },
+  { key: 'airport', name: '공항', sheet: 'SH_P', icon: '✈️', color: '#10B981', dateField: '일자' },
+  { key: 'hotel', name: '호텔', sheet: 'SH_H', icon: '🏨', color: '#F97316', dateField: '체크인날짜' },
+  { key: 'tour', name: '투어', sheet: 'SH_T', icon: '📍', color: '#EF4444', dateField: '시작일자' },
+  { key: 'rentcar', name: '렌트카', sheet: 'SH_RC', icon: '🚙', color: '#6366F1', dateField: '승차일자' },
 
-// 데이터 인터페이스
-interface SHCReservation {
-  orderId: string;
-  customerName: string;
-  customerEnglishName?: string;
-  carType: string;
-  carCode: string;
-  carCount: number;
-  passengerCount: number;
-  pickupDatetime: string;
-  pickupLocation: string;
-  dropoffLocation: string;
-  unitPrice: number;
-  totalPrice: number;
-  email: string;
-}
+];
 
-interface SHRReservation {
-  orderId: string;
-  customerName: string;
-  customerEnglishName?: string;
-  cruise: string;
-  category: string;
-  roomType: string;
-  roomCount: number;
-  roomCode: string;
-  days: number;
-  discount: string;
-  checkin: string;
-  time: string;
-  adult: number;
-  child: number;
-  toddler: number;
-  boardingInfo: string;
-  totalGuests: number;
-  boardingHelp: string;
-  discountCode: string;
-  note: string;
-  requestNote?: string;
-}
-
-interface SHCCReservation {
-  orderId: string;
-  customerName: string;
-  customerEnglishName?: string;
-  cruiseInfo?: string;
-  boardingDate: string;
-  serviceType: string;
-  category: string;
-  vehicleNumber: string;
-  seatNumber: string;
-  name: string;
-  pickupLocation?: string;
-  dropoffLocation?: string;
-  email: string;
-}
-
-interface SHPReservation {
-  orderId: string;
-  customerName: string;
-  customerEnglishName?: string;
-  tripType: string;
-  category: string;
-  route: string;
-  carCode: string;
-  carType: string;
-  date: string;
-  time: string;
-  airportName: string;
-  flightNumber: string;
-  passengerCount: number;
-  carrierCount: number;
-  placeName: string;
-  stopover: string;
-  carCount: number;
-  unitPrice: number;
-  totalPrice: number;
-  email: string;
-}
-
-interface SHHReservation {
-  orderId: string;
-  customerName: string;
-  customerEnglishName?: string;
-  hotelCode: string;
-  hotelName: string;
-  roomName: string;
-  roomType: string;
-  roomCount: number;
-  days: number;
-  checkinDate: string;
-  checkoutDate: string;
-  breakfastService: string;
-  adult: number;
-  child: number;
-  toddler: number;
-  extraBed: number;
-  totalGuests: number;
-  note: string;
-  unitPrice: number;
-  totalPrice: number;
-  email: string;
-}
-
-interface SHTReservation {
-  orderId: string;
-  customerName: string;
-  customerEnglishName?: string;
-  tourCode: string;
-  tourName: string;
-  tourType: string;
-  detailCategory: string;
-  quantity: number;
-  startDate: string;
-  endDate: string;
-  participants: number;
-  dispatch: string;
-  pickupLocation: string;
-  dropoffLocation: string;
-  memo: string;
-  unitPrice: number;
-  totalPrice: number;
-  email: string;
-  tourNote: string;
-}
-
-interface SHRCReservation {
-  orderId: string;
-  customerName: string;
-  customerEnglishName?: string;
-  carCode: string;
-  tripType: string;
-  category: string;
-  route: string;
-  carType: string;
-  carCount: number;
-  pickupDate: string;
-  pickupTime: string;
-  pickupLocation: string;
-  carrierCount: number;
-  destination: string;
-  stopover: string;
-  passengerCount: number;
-  usagePeriod: string;
-  memo: string;
-  unitPrice: number;
-  totalPrice: number;
-  email: string;
-}
-
-export default function UsageDateDashboard() {
-  const [googleSheetsData, setGoogleSheetsData] = useState([]);
-  const [googleSheetsLoading, setGoogleSheetsLoading] = useState(true);
-  const [googleSheetsError, setGoogleSheetsError] = useState(null);
+// 날짜 파싱 함수
+function tryParseDate(s) {
+  if (!s) return null;
+  if (s instanceof Date && !isNaN(s.getTime())) return s;
+  const str = String(s).trim();
   
-  const today = new Date();
-  const [selectedDate, setSelectedDate] = useState(today);
-  const [typeFilter, setTypeFilter] = useState('all');
-
-  useEffect(() => {
-    loadGoogleSheetsData();
-  }, [typeFilter]);
-
-  const loadGoogleSheetsData = async () => {
-    try {
-      setGoogleSheetsLoading(true);
-      setGoogleSheetsError(null);
-
-      if (typeFilter === 'all') {
-        const serviceTypes = ['cruise', 'car', 'vehicle', 'airport', 'hotel', 'tour', 'rentcar'];
-
-        const results = await Promise.all(
-          serviceTypes.map(async (type) => {
-            try {
-              const response = await fetch(`/api/schedule/google-sheets?type=${type}`);
-              const contentType = response.headers.get('content-type');
-              if (!contentType || !contentType.includes('application/json')) {
-                return [];
-              }
-              const result = await response.json();
-              return result.success ? (result.data || []) : [];
-            } catch {
-              return [];
-            }
-          })
-        );
-
-        const allData = results.flat();
-        setGoogleSheetsData(allData);
-      } else {
-        const typeMapping = {
-          'cruise': 'cruise',
-          'car': 'car',
-          'sht': 'vehicle',
-          'airport': 'airport',
-          'hotel': 'hotel',
-          'tour': 'tour',
-          'rentcar': 'rentcar'
-        };
-
-        const apiType = typeMapping[typeFilter] || 'car';
-        const response = await fetch(`/api/schedule/google-sheets?type=${apiType}`);
-
-        const contentType = response.headers.get('content-type');
-        if (!contentType || !contentType.includes('application/json')) {
-          throw new Error('Google Sheets API가 올바르게 응답하지 않았습니다. (HTML 페이지 반환)');
-        }
-
-        const result = await response.json();
-
-        if (!result.success) {
-          throw new Error(result.error || '데이터를 불러오는데 실패했습니다.');
-        }
-
-        setGoogleSheetsData(result.data || []);
-      }
-    } catch (err) {
-      setGoogleSheetsError(err.message || '데이터를 불러오는 중 오류가 발생했습니다.');
-    } finally {
-      setGoogleSheetsLoading(false);
+  const iso = Date.parse(str);
+  if (!isNaN(iso)) return new Date(iso);
+  
+  const parts = str.includes('/') ? str.split('/') : 
+               str.includes('.') ? str.split('.') : 
+               str.includes('-') ? str.split('-') : null;
+  
+  if (parts && parts.length === 3) {
+    const p = parts.map(x => parseInt(x, 10));
+    if (p.every(Number.isFinite)) {
+      if (p[0] >= 1000) return new Date(p[0], p[1] - 1, p[2]);
+      if (p[0] > 12) return new Date(p[2], p[1] - 1, p[0]);
+      return new Date(p[2], p[0] - 1, p[1]);
     }
-  };
+  }
+  
+  const koreanDateMatch = str.match(/(\d{4})년\s*(\d{1,2})월\s*(\d{1,2})일/);
+  if (koreanDateMatch) {
+    const [, year, month, day] = koreanDateMatch;
+    return new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
+  }
+  
+  return null;
+}
 
-  const parseDate = (dateStr) => {
-    if (!dateStr) return null;
+// 날짜를 YYYY-MM-DD 형식으로 변환
+function formatDate(date) {
+  if (!date || !(date instanceof Date) || isNaN(date.getTime())) return '';
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
 
-    try {
-      if (dateStr.includes('. ')) {
-        const parts = dateStr.split('. ').map(p => p.trim());
-        if (parts.length >= 3) {
-          const [year, month, day] = parts;
-          const dayNum = day.split(' ')[0];
-          const date = new Date(
-            parseInt(year),
-            parseInt(month) - 1,
-            parseInt(dayNum)
-          );
-          return date;
-        }
-      }
+function UsageDateDashboard({ onBack }) {
+  const [startDate, setStartDate] = useState(formatDate(new Date()));
+  const [endDate, setEndDate] = useState(formatDate(new Date()));
+  const [serviceFilter, setServiceFilter] = useState('all');
 
-      if (dateStr.includes('-')) {
-        const datePart = dateStr.split(' ')[0];
-        const [year, month, day] = datePart.split('-');
-        const date = new Date(
-          parseInt(year),
-          parseInt(month) - 1,
-          parseInt(day)
-        );
-        return date;
-      }
+  // 모든 시트 데이터 가져오기
+  const { data: SH_M_data = [], headers: SH_M_headers = [] } = useSheetData('SH_M') || {};
+  const { data: SH_R_data = [], headers: SH_R_headers = [] } = useSheetData('SH_R') || {};
+  const { data: SH_C_data = [], headers: SH_C_headers = [] } = useSheetData('SH_C') || {};
+  const { data: SH_CC_data = [], headers: SH_CC_headers = [] } = useSheetData('SH_CC') || {};
+  const { data: SH_P_data = [], headers: SH_P_headers = [] } = useSheetData('SH_P') || {};
+  const { data: SH_H_data = [], headers: SH_H_headers = [] } = useSheetData('SH_H') || {};
+  const { data: SH_T_data = [], headers: SH_T_headers = [] } = useSheetData('SH_T') || {};
+  const { data: SH_RC_data = [], headers: SH_RC_headers = [] } = useSheetData('SH_RC') || {};
 
-      const date = new Date(dateStr);
-      if (!isNaN(date.getTime())) {
-        return date;
-      }
-    } catch (error) {
-      // 에러 무시
-    }
-
-    return null;
-  };
-
-  const isPastDate = (dateStr) => {
-    const date = parseDate(dateStr);
-    if (!date) return false;
-
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-
-    return date < today;
-  };
-
-  const isSameLocalDate = (d1, d2) =>
-    d1.getFullYear() === d2.getFullYear() &&
-    d1.getMonth() === d2.getMonth() &&
-    d1.getDate() === d2.getDate();
-
-  const toKey = (d) => {
-    const y = d.getFullYear();
-    const m = String(d.getMonth() + 1).padStart(2, '0');
-    const day = String(d.getDate()).padStart(2, '0');
-    return `${y}-${m}-${day}`;
-  };
-
-  const weekdayShort = ['일', '월', '화', '수', '목', '금', '토'];
-  const formatDateLabel = (d) => {
-    const dateStr = d.toLocaleDateString('ko-KR', { month: 'long', day: 'numeric' });
-    return `${dateStr} (${weekdayShort[d.getDay()]})`;
-  };
-
-  const filteredGoogleSheets = googleSheetsData.filter(reservation => {
-    let targetDate = null;
-
-    if (reservation.checkin) {
-      targetDate = parseDate(reservation.checkin);
-    } else if (reservation.pickupDatetime) {
-      targetDate = parseDate(reservation.pickupDatetime);
-    } else if (reservation.boardingDate) {
-      targetDate = parseDate(reservation.boardingDate);
-    } else if (reservation.date) {
-      targetDate = parseDate(reservation.date);
-    } else if (reservation.checkinDate) {
-      targetDate = parseDate(reservation.checkinDate);
-    } else if (reservation.startDate) {
-      targetDate = parseDate(reservation.startDate);
-    } else if (reservation.pickupDate) {
-      targetDate = parseDate(reservation.pickupDate);
-    }
-
-    if (!targetDate) {
-      return false;
-    }
-
-    return isSameLocalDate(targetDate, selectedDate);
-  });
-
-  const navigateDate = (direction) => {
-    const newDate = new Date(selectedDate);
-    newDate.setDate(newDate.getDate() + (direction === 'next' ? 1 : -1));
-    setSelectedDate(newDate);
-  };
-
-  // 타입 판별 함수들
-  const isCruiseData = (item) => {
-    return 'checkin' in item && 'cruise' in item;
-  };
-
-  const isVehicleData = (item) => {
-    return 'boardingDate' in item && 'vehicleNumber' in item;
-  };
-
-  const isAirportData = (item) => {
-    return 'airportName' in item && 'flightNumber' in item;
-  };
-
-  const isHotelData = (item) => {
-    return 'hotelName' in item && 'checkinDate' in item;
-  };
-
-  const isTourData = (item) => {
-    return 'tourName' in item && 'startDate' in item;
-  };
-
-  const isRentcarData = (item) => {
-    return 'pickupDate' in item && 'usagePeriod' in item;
-  };
-
-  const isCarData = (item) => {
-    return 'pickupDatetime' in item && !('boardingDate' in item) && !('pickupDate' in item);
-  };
-
-  const getServiceType = (reservation) => {
-    if (isCruiseData(reservation)) return 'cruise';
-    if (isVehicleData(reservation)) return 'vehicle';
-    if (isAirportData(reservation)) return 'airport';
-    if (isHotelData(reservation)) return 'hotel';
-    if (isTourData(reservation)) return 'tour';
-    if (isRentcarData(reservation)) return 'rentcar';
-    if (isCarData(reservation)) return 'car';
-    return 'unknown';
-  };
-
-  const getServiceInfo = (type) => {
-    const serviceMap = {
-      cruise: { icon: <Ship className="w-5 h-5" />, name: '크루즈', color: 'blue' },
-      car: { icon: <Car className="w-5 h-5" />, name: '차량', color: 'blue' },
-      vehicle: { icon: <Car className="w-5 h-5" />, name: '스하차량', color: 'purple' },
-      airport: { icon: <Plane className="w-5 h-5" />, name: '공항', color: 'green' },
-      hotel: { icon: <Building className="w-5 h-5" />, name: '호텔', color: 'orange' },
-      tour: { icon: <MapPin className="w-5 h-5" />, name: '투어', color: 'red' },
-      rentcar: { icon: <Car className="w-5 h-5" />, name: '렌트카', color: 'indigo' }
+  // 주문ID로 SH_M에서 고객 정보 조회
+  const getMemberInfo = useMemo(() => {
+    return (orderId) => {
+      if (!orderId || !SH_M_data.length || !SH_M_headers.length) return null;
+      
+      const orderIdIdx = SH_M_headers.indexOf('주문ID');
+      if (orderIdIdx === -1) return null;
+      
+      const memberRow = SH_M_data.find(row => String(row[orderIdIdx]).trim() === String(orderId).trim());
+      if (!memberRow) return null;
+      
+      const emailIdx = SH_M_headers.indexOf('Email');
+      const koreanNameIdx = SH_M_headers.indexOf('한글이름');
+      const englishNameIdx = SH_M_headers.indexOf('영문이름');
+      const phoneIdx = SH_M_headers.indexOf('전화번호');
+      
+      return {
+        email: emailIdx >= 0 ? memberRow[emailIdx] : '',
+        koreanName: koreanNameIdx >= 0 ? memberRow[koreanNameIdx] : '',
+        englishName: englishNameIdx >= 0 ? memberRow[englishNameIdx] : '',
+        phone: phoneIdx >= 0 ? memberRow[phoneIdx] : ''
+      };
     };
-    return serviceMap[type] || { icon: <Calendar className="w-5 h-5" />, name: '기타', color: 'gray' };
+  }, [SH_M_data, SH_M_headers]);
+
+  // 모든 서비스 데이터를 날짜별로 집계
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const reservationsByDate = useMemo(() => {
+    const dateMap = new Map();
+
+    SERVICES.forEach(service => {
+      const sheetData = (
+        service.sheet === 'SH_R' ? SH_R_data :
+        service.sheet === 'SH_C' ? SH_C_data :
+        service.sheet === 'SH_CC' ? SH_CC_data :
+        service.sheet === 'SH_P' ? SH_P_data :
+        service.sheet === 'SH_H' ? SH_H_data :
+        service.sheet === 'SH_T' ? SH_T_data :
+        service.sheet === 'SH_RC' ? SH_RC_data : []
+      );
+
+      const sheetHeaders = (
+        service.sheet === 'SH_R' ? SH_R_headers :
+        service.sheet === 'SH_C' ? SH_C_headers :
+        service.sheet === 'SH_CC' ? SH_CC_headers :
+        service.sheet === 'SH_P' ? SH_P_headers :
+        service.sheet === 'SH_H' ? SH_H_headers :
+        service.sheet === 'SH_T' ? SH_T_headers :
+        service.sheet === 'SH_RC' ? SH_RC_headers : []
+      );
+
+      if (!sheetData.length || !sheetHeaders.length) return;
+
+      const orderIdIdx = sheetHeaders.indexOf('주문ID');
+      const dateIdx = sheetHeaders.indexOf(service.dateField);
+
+      sheetData.forEach(row => {
+        const orderId = orderIdIdx >= 0 ? row[orderIdIdx] : null;
+        if (!orderId) return;
+
+        const dateValue = dateIdx >= 0 ? row[dateIdx] : null;
+        const parsedDate = tryParseDate(dateValue);
+        if (!parsedDate) return;
+
+        const dateKey = formatDate(parsedDate);
+        if (!dateMap.has(dateKey)) {
+          dateMap.set(dateKey, []);
+        }
+
+        const memberInfo = getMemberInfo(orderId);
+        const customerName = memberInfo?.koreanName || '';
+
+        // 행 데이터를 객체로 변환
+        const rowData = {};
+        sheetHeaders.forEach((header, idx) => {
+          rowData[header] = row[idx];
+        });
+
+        dateMap.get(dateKey).push({
+          service: service.key,
+          serviceName: service.name,
+          icon: service.icon,
+          color: service.color,
+          orderId,
+          customerName,
+          memberInfo,
+          date: parsedDate,
+          dateKey,
+          rowData
+        });
+      });
+    });
+
+    // 날짜별로 정렬
+    const sortedDates = Array.from(dateMap.keys()).sort((a, b) => b.localeCompare(a));
+    const result = new Map();
+    sortedDates.forEach(dateKey => {
+      result.set(dateKey, dateMap.get(dateKey));
+    });
+
+  }, [SH_M_data, SH_M_headers, SH_R_data, SH_R_headers, SH_C_data, SH_C_headers, 
+      SH_CC_data, SH_CC_headers, SH_P_data, SH_P_headers, SH_H_data, SH_H_headers, 
+      SH_T_data, SH_T_headers, SH_RC_data, SH_RC_headers, getMemberInfo]);
+
+  // 날짜 범위 내의 예약 데이터
+  const dateRangeReservations = useMemo(() => {
+    if (!startDate || !endDate) return [];
+    
+    const allReservations = [];
+    const start = new Date(startDate);
+    const end = new Date(endDate);
+    
+    // 날짜 범위 내의 모든 예약 수집
+    reservationsByDate.forEach((reservations, dateKey) => {
+      const checkDate = new Date(dateKey);
+      if (checkDate >= start && checkDate <= end) {
+        allReservations.push(...reservations);
+      }
+    });
+    
+    // 서비스 필터 적용
+    if (serviceFilter === 'all') {
+      return allReservations;
+    }
+    return allReservations.filter(r => r.service === serviceFilter);
+  }, [reservationsByDate, startDate, endDate, serviceFilter]);
+
+  // 서비스별로 그룹화
+  const groupedByService = useMemo(() => {
+    const grouped = {};
+    
+    if (!dateRangeReservations || dateRangeReservations.length === 0) {
+      return grouped;
+    }
+    
+    dateRangeReservations.forEach(res => {
+      if (!grouped[res.service]) {
+        grouped[res.service] = {
+          serviceName: res.serviceName,
+          icon: res.icon,
+          color: res.color,
+          items: []
+        };
+      }
+      grouped[res.service].items.push(res);
+    });
+    
+    return grouped;
+  }, [dateRangeReservations]);
+
+  // 날짜별로 그룹화 (범위가 넓을 때 사용)
+  const groupedByDate = useMemo(() => {
+    const grouped = {};
+    
+    if (!dateRangeReservations || dateRangeReservations.length === 0) {
+      return grouped;
+    }
+    
+    dateRangeReservations.forEach(res => {
+      const dateKey = res.dateKey;
+      if (!grouped[dateKey]) {
+        grouped[dateKey] = [];
+      }
+      grouped[dateKey].push(res);
+    });
+    
+    // 날짜 정렬 (최신순)
+    const sortedDates = Object.keys(grouped).sort((a, b) => b.localeCompare(a));
+    const result = {};
+    sortedDates.forEach(date => {
+      result[date] = grouped[date];
+    });
+    
+    return result;
+  }, [dateRangeReservations]);
+
+  // 날짜 네비게이션
+  const navigateDateRange = (direction) => {
+    const start = new Date(startDate);
+    const end = new Date(endDate);
+    const diffDays = Math.ceil((end - start) / (1000 * 60 * 60 * 24));
+    
+    if (direction === 'next') {
+      start.setDate(start.getDate() + diffDays + 1);
+      end.setDate(end.getDate() + diffDays + 1);
+    } else {
+      start.setDate(start.getDate() - diffDays - 1);
+      end.setDate(end.getDate() - diffDays - 1);
+    }
+    
+    setStartDate(formatDate(start));
+    setEndDate(formatDate(end));
   };
 
-  const groupedByService = filteredGoogleSheets.reduce((acc, reservation) => {
-    const serviceType = getServiceType(reservation);
-    (acc[serviceType] ||= []).push(reservation);
-    return acc;
-  }, {});
-
-  // Google Sheets 예약 카드 렌더링 (원본 코드 유지)
-  const renderGoogleSheetsCard = (reservation, index) => {
-    if (isCruiseData(reservation)) {
-      const checkinDate = parseDate(reservation.checkin);
-      const isPast = isPastDate(reservation.checkin);
-
-      return (
-        <div
-          key={`${reservation.orderId}-${index}`}
-          className={`bg-gray-50 border border-gray-200 rounded-lg shadow-sm hover:shadow-md transition-all p-3 flex flex-col h-full ${isPast ? 'opacity-60' : ''}`}
-        >
-          <div className="flex items-center gap-2 mb-2 pb-1 border-b border-gray-100">
-            <div className="flex items-center justify-center w-9 h-9 rounded-full bg-blue-50 border border-blue-200">
-              <Ship className="w-5 h-5 text-blue-600" />
-            </div>
-            <h5 className="font-bold text-sm flex-1 truncate text-gray-800">크루즈</h5>
-            <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${isPast ? 'bg-gray-200 text-gray-700' : 'bg-blue-100 text-blue-800'}`}>
-              {isPast ? '완료' : '예정'}
-            </span>
-          </div>
-          <div className="flex flex-col gap-1 text-sm text-gray-700 mt-1">
-            {reservation.customerName && (
-              <div className="flex items-center gap-2 mb-1 pb-1 border-b border-gray-100">
-                <span className="font-bold text-blue-700 text-base">{reservation.customerName}</span>
-                {reservation.customerEnglishName && (
-                  <span className="text-xs text-gray-400">({reservation.customerEnglishName})</span>
-                )}
-              </div>
-            )}
-            <div className="flex items-start gap-2">
-              <span className="font-semibold text-gray-500 text-xs mt-0.5">크루즈</span>
-              <span className="text-sm font-bold text-blue-700 break-words">{reservation.cruise}</span>
-            </div>
-            <div className="flex items-start gap-2">
-              <span className="font-semibold text-gray-500 text-xs mt-0.5">객실</span>
-              <span className="text-sm break-words">{reservation.roomType} {reservation.category && `(${reservation.category})`}</span>
-            </div>
-            <div className="flex items-center gap-2 mt-1">
-              <Calendar className="w-4 h-4 text-gray-400" />
-              <span className="text-sm font-medium">{checkinDate?.toLocaleDateString('ko-KR')}</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <span className="font-semibold text-gray-500 text-xs">인원</span>
-              <span className="text-sm">
-                {reservation.adult > 0 && `👨 ${reservation.adult}명`}
-                {reservation.child > 0 && ` 👶 ${reservation.child}명`}
-                {reservation.toddler > 0 && ` 🍼 ${reservation.toddler}명`}
-              </span>
-            </div>
-            <div className="flex items-center gap-2">
-              <span className="font-semibold text-gray-500 text-xs">객실수</span>
-              <span className="text-sm">{reservation.roomCount}개</span>
-            </div>
-          </div>
-        </div>
-      );
-    }
-
-    if (isVehicleData(reservation)) {
-      const boardingDate = parseDate(reservation.boardingDate);
-      const isPast = isPastDate(reservation.boardingDate);
-
-      return (
-        <div
-          key={`${reservation.orderId}-${index}`}
-          className={`bg-gray-50 border border-gray-200 rounded-lg shadow-sm hover:shadow-md transition-all p-3 flex flex-col h-full ${isPast ? 'opacity-60' : ''}`}
-        >
-          <div className="flex items-center gap-2 mb-2 pb-1 border-b border-gray-100">
-            <div className="flex items-center justify-center w-9 h-9 rounded-full bg-purple-50 border border-purple-200">
-              <Car className="w-5 h-5 text-purple-600" />
-            </div>
-            <h5 className="font-bold text-sm flex-1 truncate text-gray-800">스하차량</h5>
-            <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${isPast ? 'bg-gray-200 text-gray-700' : 'bg-purple-100 text-purple-800'}`}>
-              {isPast ? '완료' : '예정'}
-            </span>
-          </div>
-          <div className="flex flex-col gap-1 text-sm text-gray-700 mt-1">
-            {reservation.customerName && (
-              <div className="flex items-center gap-2 mb-1 pb-1 border-b border-gray-100">
-                <span className="font-bold text-purple-700 text-base">{reservation.customerName}</span>
-                {reservation.customerEnglishName && (
-                  <span className="text-xs text-gray-400">({reservation.customerEnglishName})</span>
-                )}
-              </div>
-            )}
-            <div className="flex items-center gap-2 mt-1">
-              <Calendar className="w-4 h-4 text-gray-400" />
-              <span className="text-sm font-medium">{boardingDate?.toLocaleDateString('ko-KR')}</span>
-            </div>
-            <div className="flex items-start gap-2">
-              <Car className="w-4 h-4 text-gray-400 mt-0.5" />
-              <span className="text-sm break-words">{reservation.vehicleNumber} / 좌석: {reservation.seatNumber}</span>
-            </div>
-          </div>
-        </div>
-      );
-    }
-
-    if (isAirportData(reservation)) {
-      const serviceDate = parseDate(reservation.date);
-      const isPast = isPastDate(reservation.date);
-
-      return (
-        <div
-          key={`${reservation.orderId}-${index}`}
-          className={`bg-gray-50 border border-gray-200 rounded-lg shadow-sm hover:shadow-md transition-all p-3 flex flex-col h-full ${isPast ? 'opacity-60' : ''}`}
-        >
-          <div className="flex items-center gap-2 mb-2 pb-1 border-b border-gray-100">
-            <div className="flex items-center justify-center w-9 h-9 rounded-full bg-green-50 border border-green-200">
-              <Plane className="w-5 h-5 text-green-600" />
-            </div>
-            <h5 className="font-bold text-sm flex-1 truncate text-gray-800">공항서비스</h5>
-            <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${isPast ? 'bg-gray-200 text-gray-700' : 'bg-green-100 text-green-800'}`}>
-              {isPast ? '완료' : '예정'}
-            </span>
-          </div>
-          <div className="flex flex-col gap-1 text-sm text-gray-700 mt-1">
-            {reservation.customerName && (
-              <div className="flex items-center gap-2 mb-1 pb-1 border-b border-gray-100">
-                <span className="font-bold text-green-700 text-base">{reservation.customerName}</span>
-              </div>
-            )}
-            <div className="flex items-center gap-2 mt-1">
-              <Calendar className="w-4 h-4 text-gray-400" />
-              <span className="text-sm font-medium">
-                {serviceDate?.toLocaleDateString('ko-KR')} {reservation.time}
-              </span>
-            </div>
-            <div className="flex items-start gap-2">
-              <Plane className="w-4 h-4 text-gray-400 mt-0.5" />
-              <span className="text-sm break-words">{reservation.airportName} / {reservation.flightNumber}</span>
-            </div>
-          </div>
-        </div>
-      );
-    }
-
-    if (isHotelData(reservation)) {
-      const checkinDate = parseDate(reservation.checkinDate);
-      const isPast = isPastDate(reservation.checkinDate);
-
-      return (
-        <div
-          key={`${reservation.orderId}-${index}`}
-          className={`bg-gray-50 border border-gray-200 rounded-lg shadow-sm hover:shadow-md transition-all p-3 flex flex-col h-full ${isPast ? 'opacity-60' : ''}`}
-        >
-          <div className="flex items-center gap-2 mb-2 pb-1 border-b border-gray-100">
-            <div className="flex items-center justify-center w-9 h-9 rounded-full bg-orange-50 border border-orange-200">
-              <Building className="w-5 h-5 text-orange-600" />
-            </div>
-            <h5 className="font-bold text-sm flex-1 truncate text-gray-800">호텔</h5>
-            <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${isPast ? 'bg-gray-200 text-gray-700' : 'bg-orange-100 text-orange-800'}`}>
-              {isPast ? '완료' : '예정'}
-            </span>
-          </div>
-          <div className="flex flex-col gap-1 text-sm text-gray-700 mt-1">
-            {reservation.customerName && (
-              <div className="flex items-center gap-2 mb-1 pb-1 border-b border-gray-100">
-                <span className="font-bold text-orange-700 text-base">{reservation.customerName}</span>
-              </div>
-            )}
-            <div className="flex items-start gap-2">
-              <span className="font-semibold text-gray-500 text-xs mt-0.5">호텔</span>
-              <span className="text-sm font-bold text-orange-700 break-words">{reservation.hotelName}</span>
-            </div>
-            <div className="flex items-center gap-2 mt-1">
-              <Calendar className="w-4 h-4 text-gray-400" />
-              <span className="text-sm font-medium">{checkinDate?.toLocaleDateString('ko-KR')}</span>
-            </div>
-          </div>
-        </div>
-      );
-    }
-
-    if (isTourData(reservation)) {
-      const startDate = parseDate(reservation.startDate);
-      const isPast = isPastDate(reservation.startDate);
-
-      return (
-        <div
-          key={`${reservation.orderId}-${index}`}
-          className={`bg-gray-50 border border-gray-200 rounded-lg shadow-sm hover:shadow-md transition-all p-3 flex flex-col h-full ${isPast ? 'opacity-60' : ''}`}
-        >
-          <div className="flex items-center gap-2 mb-2 pb-1 border-b border-gray-100">
-            <div className="flex items-center justify-center w-9 h-9 rounded-full bg-pink-50 border border-pink-200">
-              <MapPin className="w-5 h-5 text-pink-600" />
-            </div>
-            <h5 className="font-bold text-sm flex-1 truncate text-gray-800">투어</h5>
-            <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${isPast ? 'bg-gray-200 text-gray-700' : 'bg-pink-100 text-pink-800'}`}>
-              {isPast ? '완료' : '예정'}
-            </span>
-          </div>
-          <div className="flex flex-col gap-1 text-sm text-gray-700 mt-1">
-            {reservation.customerName && (
-              <div className="flex items-center gap-2 mb-1 pb-1 border-b border-gray-100">
-                <span className="font-bold text-pink-700 text-base">{reservation.customerName}</span>
-              </div>
-            )}
-            <div className="flex items-start gap-2">
-              <span className="font-semibold text-gray-500 text-xs mt-0.5">투어</span>
-              <span className="text-sm font-bold text-pink-700 break-words">{reservation.tourName}</span>
-            </div>
-            <div className="flex items-center gap-2 mt-1">
-              <Calendar className="w-4 h-4 text-gray-400" />
-              <span className="text-sm font-medium">{startDate?.toLocaleDateString('ko-KR')}</span>
-            </div>
-          </div>
-        </div>
-      );
-    }
-
-    if (isRentcarData(reservation)) {
-      const pickupDate = parseDate(reservation.pickupDate);
-      const isPast = isPastDate(reservation.pickupDate);
-
-      return (
-        <div
-          key={`${reservation.orderId}-${index}`}
-          className={`bg-gray-50 border border-gray-200 rounded-lg shadow-sm hover:shadow-md transition-all p-3 flex flex-col h-full ${isPast ? 'opacity-60' : ''}`}
-        >
-          <div className="flex items-center gap-2 mb-2 pb-1 border-b border-gray-100">
-            <div className="flex items-center justify-center w-9 h-9 rounded-full bg-indigo-50 border border-indigo-200">
-              <Car className="w-5 h-5 text-indigo-600" />
-            </div>
-            <h5 className="font-bold text-sm flex-1 truncate text-gray-800">렌트카</h5>
-            <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${isPast ? 'bg-gray-200 text-gray-700' : 'bg-indigo-100 text-indigo-800'}`}>
-              {isPast ? '완료' : '예정'}
-            </span>
-          </div>
-          <div className="flex flex-col gap-1 text-sm text-gray-700 mt-1">
-            {reservation.customerName && (
-              <div className="flex items-center gap-2 mb-1 pb-1 border-b border-gray-100">
-                <span className="font-bold text-indigo-700 text-base">{reservation.customerName}</span>
-              </div>
-            )}
-            <div className="flex items-start gap-2">
-              <span className="font-semibold text-gray-500 text-xs mt-0.5">차량</span>
-              <span className="text-sm font-bold text-indigo-700 break-words">{reservation.carType}</span>
-            </div>
-            <div className="flex items-center gap-2 mt-1">
-              <Calendar className="w-4 h-4 text-gray-400" />
-              <span className="text-sm font-medium">
-                {pickupDate?.toLocaleDateString('ko-KR')} {reservation.pickupTime}
-              </span>
-            </div>
-          </div>
-        </div>
-      );
-    }
-
-    if (isCarData(reservation)) {
-      const pickupDate = parseDate(reservation.pickupDatetime);
-      const isPast = isPastDate(reservation.pickupDatetime);
-
-      return (
-        <div
-          key={`${reservation.orderId}-${index}`}
-          className={`bg-gray-50 border border-gray-200 rounded-lg shadow-sm hover:shadow-md transition-all p-3 flex flex-col h-full ${isPast ? 'opacity-60' : ''}`}
-        >
-          <div className="flex items-center gap-2 mb-2 pb-1 border-b border-gray-100">
-            <div className="flex items-center justify-center w-9 h-9 rounded-full bg-blue-50 border border-blue-200">
-              <Car className="w-5 h-5 text-blue-600" />
-            </div>
-            <h5 className="font-bold text-sm flex-1 truncate text-gray-800">차량</h5>
-            <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${isPast ? 'bg-gray-200 text-gray-700' : 'bg-blue-100 text-blue-800'}`}>
-              {isPast ? '완료' : '예정'}
-            </span>
-          </div>
-          <div className="flex flex-col gap-1 text-sm text-gray-700 mt-1">
-            {reservation.customerName && (
-              <div className="flex items-center gap-2 mb-1 pb-1 border-b border-gray-100">
-                <span className="font-bold text-blue-700 text-base">{reservation.customerName}</span>
-              </div>
-            )}
-            <div className="flex items-start gap-2">
-              <span className="font-semibold text-gray-500 text-xs mt-0.5">차량</span>
-              <span className="text-sm break-words">{reservation.carType}</span>
-            </div>
-            <div className="flex items-center gap-2 mt-1">
-              <Calendar className="w-4 h-4 text-gray-400" />
-              <span className="text-sm">{pickupDate?.toLocaleDateString('ko-KR')}</span>
-            </div>
-          </div>
-        </div>
-      );
-    }
-
-    return null;
+  const goToToday = () => {
+    const today = formatDate(new Date());
+    setStartDate(today);
+    setEndDate(today);
   };
 
-  if (googleSheetsLoading) {
+  // 사용 가능한 날짜 목록
+  const availableDates = useMemo(() => {
+    return Array.from(reservationsByDate.keys());
+  }, [reservationsByDate]);
+
+  // 예약 카드 렌더링 (간단한 스타일)
+  const renderReservationCard = (reservation) => {
+    const getServiceDetails = () => {
+      const data = reservation.rowData;
+      
+      switch (reservation.service) {
+        case 'cruise':
+          return (
+            <>
+              {data['크루즈'] && <div><strong>크루즈:</strong> {data['크루즈']}</div>}
+              {data['객실종류'] && <div><strong>객실:</strong> {data['객실종류']}</div>}
+              {data['ADULT'] && <div><strong>인원:</strong> {data['ADULT']}</div>}
+            </>
+          );
+        case 'vehicle':
+          return (
+            <>
+              {data['차량종류'] && <div><strong>차량:</strong> {data['차량종류']}</div>}
+              {data['승차위치'] && <div><strong>승차:</strong> {data['승차위치']}</div>}
+              {data['하차위치'] && <div><strong>하차:</strong> {data['하차위치']}</div>}
+            </>
+          );
+        case 'car':
+          return (
+            <>
+              {data['차량번호'] && <div><strong>차량번호:</strong> {data['차량번호']}</div>}
+              {data['좌석번호'] && <div><strong>좌석:</strong> {data['좌석번호']}</div>}
+              {data['이름'] && <div><strong>이름:</strong> {data['이름']}</div>}
+            </>
+          );
+        case 'airport':
+          return (
+            <>
+              {data['공항명'] && <div><strong>공항:</strong> {data['공항명']}</div>}
+              {data['항공편'] && <div><strong>항공편:</strong> {data['항공편']}</div>}
+              {data['시간'] && <div><strong>시간:</strong> {data['시간']}</div>}
+            </>
+          );
+        case 'hotel':
+          return (
+            <>
+              {data['호텔명'] && <div><strong>호텔:</strong> {data['호텔명']}</div>}
+              {data['객실종류'] && <div><strong>객실:</strong> {data['객실종류']}</div>}
+              {data['일정'] && <div><strong>일정:</strong> {data['일정']}</div>}
+            </>
+          );
+        case 'tour':
+          return (
+            <>
+              {data['투어명'] && <div><strong>투어:</strong> {data['투어명']}</div>}
+              {data['투어종류'] && <div><strong>종류:</strong> {data['투어종류']}</div>}
+              {data['투어인원'] && <div><strong>인원:</strong> {data['투어인원']}</div>}
+            </>
+          );
+        case 'rentcar':
+          return (
+            <>
+              {data['차량종류'] && <div><strong>차량:</strong> {data['차량종류']}</div>}
+              {data['승차일자'] && <div><strong>픽업일:</strong> {data['승차일자']}</div>}
+              {data['사용기간'] && <div><strong>기간:</strong> {data['사용기간']}</div>}
+            </>
+          );
+        default:
+          return null;
+      }
+    };
+
     return (
-      <div className="min-h-screen bg-gray-100 p-6">
-        <div className="flex justify-center items-center h-64">
-          <div className="text-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto"></div>
-            <p className="mt-4 text-gray-600">데이터를 불러오는 중...</p>
-          </div>
+      <div
+        key={`${reservation.dateKey}-${reservation.orderId}-${reservation.service}`}
+        style={{
+          backgroundColor: '#F9FAFB',
+          border: '1px solid #E5E7EB',
+          borderRadius: '8px',
+          boxShadow: '0 1px 2px rgba(0,0,0,0.05)',
+          padding: '12px',
+          display: 'flex',
+          flexDirection: 'column',
+          height: '100%'
+        }}
+      >
+        {/* 헤더 */}
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: '8px',
+          marginBottom: '8px',
+          paddingBottom: '8px',
+          borderBottom: '1px solid #F3F4F6'
+        }}>
+          <span style={{ fontSize: '1.5rem' }}>{reservation.icon}</span>
+          <h5 style={{
+            fontWeight: 'bold',
+            fontSize: '0.875rem',
+            flex: 1,
+            color: '#1F2937',
+            margin: 0,
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+            whiteSpace: 'nowrap'
+          }}>
+            {reservation.serviceName}
+          </h5>
+          <span style={{
+            padding: '4px 8px',
+            borderRadius: '9999px',
+            fontSize: '0.75rem',
+            fontWeight: '500',
+            backgroundColor: reservation.color + '20',
+            color: reservation.color
+          }}>
+            예정
+          </span>
+        </div>
+
+        {/* 내용 */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', fontSize: '0.875rem', color: '#374151' }}>
+          {reservation.customerName && (
+            <div style={{
+              fontWeight: 'bold',
+              color: reservation.color,
+              marginBottom: '4px',
+              borderBottom: '1px solid #F3F4F6',
+              paddingBottom: '4px'
+            }}>
+              {reservation.customerName}
+            </div>
+          )}
+
+          {getServiceDetails()}
         </div>
       </div>
     );
-  }
+  };
 
   return (
-    <div className="min-h-screen bg-gray-100">
-      <div className="max-w-7xl mx-auto p-6">
-        {/* 헤더 */}
-        <div className="bg-white rounded-lg shadow-md p-6 mb-6">
-          <h1 className="text-3xl font-bold text-gray-800 mb-6">사용일별 예약 조회</h1>
+    <div className="admin-dashboard">
+      <div className="dashboard-header">
+        <button onClick={onBack} className="back-button">← 뒤로</button>
+        <h2>📅 사용일별 현황</h2>
+      </div>
 
-          {/* 날짜 컨트롤 */}
-          <div className="flex items-center justify-between mb-4 flex-wrap gap-4">
-            <div className="flex items-center gap-4">
-              <button
-                onClick={() => navigateDate('prev')}
-                className="p-2 bg-gray-100 rounded-lg hover:bg-gray-200"
-              >
-                <ChevronLeft className="w-5 h-5" />
-              </button>
-
-              <h2 className="text-2xl font-semibold">
-                {selectedDate.toLocaleDateString('ko-KR', { year: 'numeric', month: 'long', day: 'numeric' })}
-              </h2>
-
-              <button
-                onClick={() => setSelectedDate(new Date())}
-                className="px-3 py-1 bg-blue-50 text-blue-600 rounded-lg border border-blue-200 text-sm font-medium hover:bg-blue-100"
-              >
-                오늘
-              </button>
-
-              <button
-                onClick={() => navigateDate('next')}
-                className="p-2 bg-gray-100 rounded-lg hover:bg-gray-200"
-              >
-                <ChevronRight className="w-5 h-5" />
-              </button>
+      {/* 날짜 선택 및 필터 */}
+      <div style={{
+        backgroundColor: '#FFFFFF',
+        padding: '20px',
+        borderRadius: '8px',
+        marginBottom: '20px',
+        boxShadow: '0 1px 3px rgba(0,0,0,0.1)'
+      }}>
+        {/* 날짜 범위 선택 */}
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          gap: '12px',
+          marginBottom: '16px',
+          flexWrap: 'wrap'
+        }}>
+          <button
+            onClick={() => navigateDateRange('prev')}
+            style={{
+              padding: '8px 16px',
+              backgroundColor: '#F3F4F6',
+              border: 'none',
+              borderRadius: '6px',
+              cursor: 'pointer',
+              fontWeight: '600'
+            }}
+          >
+            ◀ 이전
+          </button>
+          
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <div>
+              <label style={{ fontSize: '0.75rem', color: '#6B7280', display: 'block', marginBottom: '4px' }}>
+                시작일
+              </label>
+              <input
+                type="date"
+                value={startDate}
+                onChange={(e) => setStartDate(e.target.value)}
+                style={{
+                  padding: '8px 12px',
+                  border: '2px solid #3B82F6',
+                  borderRadius: '6px',
+                  fontSize: '0.875rem',
+                  fontWeight: '600'
+                }}
+              />
+            </div>
+            
+            <span style={{ marginTop: '20px', fontWeight: 'bold', color: '#6B7280' }}>~</span>
+            
+            <div>
+              <label style={{ fontSize: '0.75rem', color: '#6B7280', display: 'block', marginBottom: '4px' }}>
+                종료일
+              </label>
+              <input
+                type="date"
+                value={endDate}
+                onChange={(e) => setEndDate(e.target.value)}
+                style={{
+                  padding: '8px 12px',
+                  border: '2px solid #3B82F6',
+                  borderRadius: '6px',
+                  fontSize: '0.875rem',
+                  fontWeight: '600'
+                }}
+              />
             </div>
           </div>
 
-          {/* 타입 필터 */}
-          <div className="flex gap-2 flex-wrap">
-            <Filter className="w-5 h-5 text-gray-600 mt-2" />
-            <button
-              onClick={() => setTypeFilter('all')}
-              className={`px-3 py-1 rounded-full text-sm transition-colors ${
-                typeFilter === 'all' ? 'bg-blue-500 text-white' : 'bg-gray-200 text-gray-700'
-              }`}
-            >
-              전체
-            </button>
-            {['cruise', 'car', 'vehicle', 'airport', 'hotel', 'tour', 'rentcar'].map(type => (
-              <button
-                key={type}
-                onClick={() => setTypeFilter(type)}
-                className={`px-3 py-1 rounded-full text-sm transition-colors ${
-                  typeFilter === type ? 'bg-blue-500 text-white' : 'bg-gray-200 text-gray-700'
-                }`}
-              >
-                {getServiceInfo(type).name}
-              </button>
-            ))}
-          </div>
+          <button
+            onClick={goToToday}
+            style={{
+              padding: '8px 16px',
+              backgroundColor: '#3B82F6',
+              color: '#FFFFFF',
+              border: 'none',
+              borderRadius: '6px',
+              cursor: 'pointer',
+              fontWeight: '600'
+            }}
+          >
+            오늘
+          </button>
+
+          <button
+            onClick={() => navigateDateRange('next')}
+            style={{
+              padding: '8px 16px',
+              backgroundColor: '#F3F4F6',
+              border: 'none',
+              borderRadius: '6px',
+              cursor: 'pointer',
+              fontWeight: '600'
+            }}
+          >
+            다음 ▶
+          </button>
         </div>
 
-        {/* 예약 목록 */}
-        <div className="bg-white rounded-lg shadow-md p-6">
-          {googleSheetsError ? (
-            <div className="text-center py-12">
-              <Calendar className="w-16 h-16 text-red-300 mx-auto mb-4" />
-              <h3 className="text-lg font-medium text-red-600 mb-2">데이터 로드 실패</h3>
-              <p className="text-sm text-gray-500">{googleSheetsError}</p>
-            </div>
-          ) : filteredGoogleSheets.length === 0 ? (
-            <div className="text-center py-12">
-              <Calendar className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-              <h3 className="text-lg font-medium text-gray-600 mb-2">
-                {typeFilter === 'all' ? '예약된 일정이 없습니다' : `${getServiceInfo(typeFilter).name} 일정이 없습니다`}
-              </h3>
-            </div>
-          ) : (
-            <div className="space-y-6">
-              {Object.entries(groupedByService)
-                .sort(([typeA], [typeB]) => {
-                  const order = ['cruise', 'car', 'vehicle', 'airport', 'hotel', 'tour', 'rentcar'];
-                  return order.indexOf(typeA) - order.indexOf(typeB);
-                })
-                .map(([serviceType, reservations]) => {
-                  const serviceInfo = getServiceInfo(serviceType);
-                  const reservationArray = Array.isArray(reservations) ? reservations : [];
-                  return (
-                    <div key={serviceType}>
-                      <div className="flex items-center gap-2 mb-3 pb-2 border-b-2">
-                        <div className={`text-${serviceInfo.color}-600`}>
-                          {serviceInfo.icon}
-                        </div>
-                        <h3 className="text-lg font-semibold text-gray-800">
-                          {serviceInfo.name}
-                          <span className="ml-2 text-sm text-gray-500">({reservationArray.length}건)</span>
-                        </h3>
-                      </div>
-
-                      {serviceType === 'vehicle' ? (
-                        <div className="space-y-4">
-                          {Object.entries(
-                            reservationArray.reduce((acc, reservation) => {
-                              const category = reservation.category || '미분류';
-                              (acc[category] ||= []).push(reservation);
-                              return acc;
-                            }, {})
-                          ).map(([category, categoryReservations]) => (
-                            <div key={category}>
-                              <div className="flex items-center gap-2 mb-2 ml-4">
-                                <span className="px-3 py-1 rounded bg-purple-100 text-purple-700 text-sm font-semibold">
-                                  {category}
-                                </span>
-                                <span className="text-xs text-gray-500">({categoryReservations.length}건)</span>
-                              </div>
-                              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                                {categoryReservations.map((reservation, index) =>
-                                  renderGoogleSheetsCard(reservation, index)
-                                )}
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      ) : (
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                          {reservationArray.map((reservation, index) =>
-                            renderGoogleSheetsCard(reservation, index)
-                          )}
-                        </div>
-                      )}
-                    </div>
-                  );
-                })}
-            </div>
-          )}
+        {/* 서비스 필터 버튼 */}
+        <div style={{
+          display: 'flex',
+          flexWrap: 'wrap',
+          gap: '8px',
+          justifyContent: 'center'
+        }}>
+          <button
+            onClick={() => setServiceFilter('all')}
+            style={{
+              padding: '8px 16px',
+              backgroundColor: serviceFilter === 'all' ? '#3B82F6' : '#F3F4F6',
+              color: serviceFilter === 'all' ? '#FFFFFF' : '#374151',
+              border: 'none',
+              borderRadius: '6px',
+              cursor: 'pointer',
+              fontWeight: '600',
+              fontSize: '0.875rem'
+            }}
+          >
+            전체
+          </button>
+          {SERVICES.map(service => (
+            <button
+              key={service.key}
+              onClick={() => setServiceFilter(service.key)}
+              style={{
+                padding: '8px 16px',
+                backgroundColor: serviceFilter === service.key ? service.color : '#F3F4F6',
+                color: serviceFilter === service.key ? '#FFFFFF' : '#374151',
+                border: 'none',
+                borderRadius: '6px',
+                cursor: 'pointer',
+                fontWeight: '600',
+                fontSize: '0.875rem'
+              }}
+            >
+              {service.icon} {service.name}
+            </button>
+          ))}
         </div>
       </div>
+
+      {/* 예약 현황 - key를 사용하여 날짜 변경 시 강제 리렌더링 */}
+      <div 
+        key={`reservations-${startDate}-${endDate}-${serviceFilter}`}
+        style={{
+          backgroundColor: '#FFFFFF',
+          padding: '20px',
+          borderRadius: '8px',
+          boxShadow: '0 1px 3px rgba(0,0,0,0.1)'
+        }}
+      >
+        <h3 style={{ marginBottom: '16px', color: '#1F2937' }}>
+          {startDate === endDate ? startDate : `${startDate} ~ ${endDate}`} - 총 {dateRangeReservations.length}건
+        </h3>
+
+        {dateRangeReservations.length === 0 ? (
+          <div style={{
+            textAlign: 'center',
+            padding: '40px',
+            color: '#6B7280'
+          }}>
+            <div style={{ fontSize: '3rem', marginBottom: '16px' }}>📭</div>
+            <div style={{ fontSize: '1.125rem', fontWeight: '600' }}>
+              데이터 로딩중....
+            </div>
+            {availableDates.length > 0 && (
+              <div style={{ marginTop: '12px', fontSize: '0.875rem' }}>
+                잠시 기다려 주세요.
+              </div>
+            )}
+          </div>
+        ) : (
+          <div>
+            {startDate === endDate ? (
+              /* 단일 날짜: 서비스별로 그룹화하여 표시 */
+              Object.entries(groupedByService).map(([serviceKey, group]) => (
+                <div key={serviceKey} style={{ marginBottom: '24px' }}>
+                  <div style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '8px',
+                    marginBottom: '12px',
+                    padding: '8px 12px',
+                    backgroundColor: `${group.color}10`,
+                    borderRadius: '6px',
+                    borderLeft: `4px solid ${group.color}`
+                  }}>
+                    <span style={{ fontSize: '1.25rem' }}>{group.icon}</span>
+                    <h4 style={{ margin: 0, color: group.color, fontSize: '1rem' }}>
+                      {group.serviceName} ({group.items.length}건)
+                    </h4>
+                  </div>
+                  
+                  {/* 그리드 레이아웃으로 카드 표시 */}
+                  <div style={{
+                    display: 'grid',
+                    gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))',
+                    gap: '12px'
+                  }}>
+                    {group.items.map(reservation => renderReservationCard(reservation))}
+                  </div>
+                </div>
+              ))
+            ) : (
+              /* 날짜 범위: 날짜별로 그룹화하여 표시 */
+              Object.entries(groupedByDate).map(([dateKey, reservations]) => (
+                <div key={dateKey} style={{ marginBottom: '32px' }}>
+                  <div style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '8px',
+                    marginBottom: '16px',
+                    padding: '12px 16px',
+                    backgroundColor: '#F3F4F6',
+                    borderRadius: '8px',
+                    borderLeft: `4px solid #3B82F6`
+                  }}>
+                    <span style={{ fontSize: '1.5rem' }}>📅</span>
+                    <h4 style={{ margin: 0, color: '#1F2937', fontSize: '1.125rem' }}>
+                      {dateKey} ({reservations.length}건)
+                    </h4>
+                  </div>
+                  
+                  {/* 날짜별 예약들을 서비스별로 그룹화하여 표시 */}
+                  {(() => {
+                    const serviceGroups = {};
+                    reservations.forEach(res => {
+                      if (!serviceGroups[res.service]) {
+                        serviceGroups[res.service] = {
+                          serviceName: res.serviceName,
+                          icon: res.icon,
+                          color: res.color,
+                          items: []
+                        };
+                      }
+                      serviceGroups[res.service].items.push(res);
+                    });
+                    
+                    return Object.entries(serviceGroups).map(([serviceKey, group]) => (
+                      <div key={serviceKey} style={{ marginBottom: '16px' }}>
+                        <div style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '8px',
+                          marginBottom: '8px',
+                          padding: '6px 12px',
+                          backgroundColor: `${group.color}10`,
+                          borderRadius: '6px',
+                          borderLeft: `3px solid ${group.color}`
+                        }}>
+                          <span style={{ fontSize: '1rem' }}>{group.icon}</span>
+                          <h5 style={{ margin: 0, color: group.color, fontSize: '0.875rem' }}>
+                            {group.serviceName} ({group.items.length}건)
+                          </h5>
+                        </div>
+                        
+                        <div style={{
+                          display: 'grid',
+                          gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))',
+                          gap: '12px',
+                          marginLeft: '12px'
+                        }}>
+                          {group.items.map(reservation => renderReservationCard(reservation))}
+                        </div>
+                      </div>
+                    ));
+                  })()}
+                </div>
+              ))
+            )}
+          </div>
+        )}
+      </div>
+
+      {/* 범위 내 날짜별 예약 건수 */}
+      {availableDates.length > 0 && (
+        <div style={{
+          backgroundColor: '#FFFFFF',
+          padding: '20px',
+          borderRadius: '8px',
+          marginTop: '20px',
+          boxShadow: '0 1px 3px rgba(0,0,0,0.1)'
+        }}>
+          <h3 style={{ marginBottom: '12px', color: '#1F2937' }}>날짜별 예약 현황</h3>
+          <div style={{
+            display: 'flex',
+            flexWrap: 'wrap',
+            gap: '8px'
+          }}>
+            {availableDates.slice(0, 50).map(date => {
+              const count = reservationsByDate.get(date)?.length || 0;
+              const dateObj = new Date(date);
+              const start = new Date(startDate);
+              const end = new Date(endDate);
+              const isInRange = dateObj >= start && dateObj <= end;
+              
+              return (
+                <button
+                  key={date}
+                  onClick={() => {
+                    setStartDate(date);
+                    setEndDate(date);
+                  }}
+                  style={{
+                    padding: '8px 12px',
+                    backgroundColor: isInRange ? '#3B82F6' : '#F3F4F6',
+                    color: isInRange ? '#FFFFFF' : '#374151',
+                    border: 'none',
+                    borderRadius: '6px',
+                    cursor: 'pointer',
+                    fontSize: '0.875rem',
+                    fontWeight: isInRange ? '600' : '400'
+                  }}
+                >
+                  {date} ({count})
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
+
+export default UsageDateDashboard;

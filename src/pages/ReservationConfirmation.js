@@ -39,7 +39,6 @@ function collectRowsByOrderId(allSheets, orderId){
 
 function parseDateLoose(v){ if(!v) return null; if(v instanceof Date) return v; const s=String(v).trim().replace(/\./g,'-').replace(/년|월/g,'-').replace(/일/g,'').replace(/\s+/g,' '); const d=new Date(s); return Number.isNaN(d)?null:d; }
 function fmtDate(v){ const d = parseDateLoose(v); if(!d) return ''; const y=d.getFullYear(); const m=String(d.getMonth()+1).padStart(2,'0'); const dd=String(d.getDate()).padStart(2,'0'); return `${y}-${m}-${dd}`; }
-function fmtNum(n){ const x=Number(n); return Number.isFinite(x)? x.toLocaleString('en-US') : (n??''); }
 
 function pick(m, keys){ for(const k of keys){ const v = m[normalizeKey(k)]; if(v!=null && String(v).trim()!=='') return String(v).trim(); } return ''; }
 

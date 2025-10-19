@@ -1,0 +1,698 @@
+import React, { useState, useMemo, useEffect } from 'react';
+import './AdminDashboard.css';
+import { useSheetData } from '../utils/adminAPI';
+
+function UsageDateDashboard({ onBack }) {
+  const [selectedDate, setSelectedDate] = useState(new Date());
+  const [typeFilter, setTypeFilter] = useState('all');
+
+  // 모든 시트 데이터 가져오기
+  const { data: SH_M_data = [], headers: SH_M_headers = [], loading: SH_M_loading } = useSheetData('SH_M') || {};
+  const { data: SH_R_data = [], headers: SH_R_headers = [], loading: SH_R_loading } = useSheetData('SH_R') || {};
+  const { data: SH_C_data = [], headers: SH_C_headers = [], loading: SH_C_loading } = useSheetData('SH_C') || {};
+  const { data: SH_CC_data = [], headers: SH_CC_headers = [], loading: SH_CC_loading } = useSheetData('SH_CC') || {};
+  const { data: SH_P_data = [], headers: SH_P_headers = [], loading: SH_P_loading } = useSheetData('SH_P') || {};
+  const { data: SH_H_data = [], headers: SH_H_headers = [], loading: SH_H_loading } = useSheetData('SH_H') || {};
+  const { data: SH_T_data = [], headers: SH_T_headers = [], loading: SH_T_loading } = useSheetData('SH_T') || {};
+  const { data: SH_RC_data = [], headers: SH_RC_headers = [], loading: SH_RC_loading } = useSheetData('SH_RC') || {};
+
+  const loading = SH_M_loading || SH_R_loading || SH_C_loading || SH_CC_loading || SH_P_loading || SH_H_loading || SH_T_loading || SH_RC_loading;
+
+  // SH_M 데이터 디버그
+  React.useEffect(() => {
+    if (!SH_M_loading && SH_M_data.length > 0) {
+      console.log('SH_M loaded:', {
+        headers: SH_M_headers,
+        orderIdIndex: SH_M_headers.indexOf('주문ID'),
+        koreanNameIndex: SH_M_headers.indexOf('한글이름'),
+        dataLength: SH_M_data.length,
+        firstRow: SH_M_data[0],
+        sampleOrderIds: SH_M_data.slice(0, 5).map(r => r[SH_M_headers.indexOf('주문ID')])
+      });
+    }
+  }, [SH_M_data, SH_M_headers, SH_M_loading]);
+
+  // 헤더에서 열 인덱스 찾기 (대소문자 구분 없음)
+  const findColumnIndex = (headers, names) => {
+    if (!Array.isArray(headers)) return -1;
+    const searchNames = Array.isArray(names) ? names : [names];
+    for (const name of searchNames) {
+      const idx = headers.findIndex(h => 
+        h && h.toString().toLowerCase().includes(name.toLowerCase())
+      );
+      if (idx !== -1) return idx;
+    }
+    return -1;
+  };
+
+  // 행 데이터 추출
+  const getRowValue = (row, headers, fieldNames) => {
+    const idx = findColumnIndex(headers, fieldNames);
+    return idx !== -1 && row && row[idx] ? row[idx] : '';
+  };
+
+  // 주문ID로 SH_M 시트에서 고객명 조회 (ServiceDashboardBase 방식 사용)
+  const getCustomerNameByOrderId = useMemo(() => {
+    return (orderId) => {
+      if (!orderId) return '';
+      if (!Array.isArray(SH_M_data) || SH_M_data.length === 0) return '';
+      if (!Array.isArray(SH_M_headers) || SH_M_headers.length === 0) return '';
+      
+      // 정확한 일치로 주문ID 컬럼 찾기 (대소문자 구분)
+      const orderIdIndex = SH_M_headers.indexOf('주문ID');
+      if (orderIdIndex === -1) {
+        console.log('SH_M headers:', SH_M_headers);
+        return '';
+      }
+      
+      const koreanNameIndex = SH_M_headers.indexOf('한글이름');
+      if (koreanNameIndex === -1) return '';
+      
+      // 주문ID로 회원 데이터 찾기 (텍스트 정규화)
+      const orderIdStr = String(orderId).trim();
+      const memberRow = SH_M_data.find(row => {
+        const rowOrderId = row && row[orderIdIndex] ? String(row[orderIdIndex]).trim() : '';
+        return rowOrderId === orderIdStr;
+      });
+      
+      if (!memberRow) return '';
+      
+      const koreanName = memberRow[koreanNameIndex];
+      return koreanName ? String(koreanName).trim() : '';
+    };
+  }, [SH_M_data, SH_M_headers]);
+
+  // 날짜 파싱
+  const parseDate = (dateStr) => {
+    if (!dateStr) return null;
+    
+    const str = String(dateStr).trim();
+    
+    try {
+      // ISO 형식 (YYYY-MM-DD)
+      if (str.includes('-')) {
+        const parts = str.split('-');
+        if (parts.length >= 3) {
+          const year = parseInt(parts[0]);
+          const month = parseInt(parts[1]) - 1;
+          const day = parseInt(parts[2]);
+          return new Date(year, month, day);
+        }
+      }
+      
+      // 점 형식 (YYYY. MM. DD)
+      if (str.includes('. ') || str.includes('.')) {
+        const cleaned = str.replace(/\./g, ' ').trim();
+        const parts = cleaned.split(/\s+/);
+        if (parts.length >= 3) {
+          const year = parseInt(parts[0]);
+          const month = parseInt(parts[1]) - 1;
+          const day = parseInt(parts[2]);
+          const d = new Date(year, month, day);
+          if (!isNaN(d.getTime())) return d;
+        }
+      }
+      
+      // 슬래시 형식 (YYYY/MM/DD)
+      if (str.includes('/')) {
+        const parts = str.split('/');
+        if (parts.length >= 3) {
+          const year = parseInt(parts[0]);
+          const month = parseInt(parts[1]) - 1;
+          const day = parseInt(parts[2]);
+          return new Date(year, month, day);
+        }
+      }
+      
+      // Date 객체 직접 파싱
+      const d = new Date(str);
+      if (!isNaN(d.getTime())) return d;
+    } catch (e) {
+      console.error('Date parse error:', e);
+    }
+    
+    return null;
+  };
+
+  // 같은 날짜 비교
+  const isSameDate = (d1, d2) => {
+    if (!d1 || !d2) return false;
+    return d1.getFullYear() === d2.getFullYear() &&
+           d1.getMonth() === d2.getMonth() &&
+           d1.getDate() === d2.getDate();
+  };
+
+  // 모든 예약 데이터 변환
+  const allReservations = useMemo(() => {
+    const results = [];
+
+    // 크루즈 (SH_R)
+    if (Array.isArray(SH_R_data)) {
+      SH_R_data.forEach((row, idx) => {
+        const orderId = getRowValue(row, SH_R_headers, ['예약번호', '주문번호', 'ID']);
+        if (orderId && idx < 3) {
+          console.log(`SH_R Row ${idx}:`, {
+            orderId,
+            sheetHeaders: SH_R_headers,
+            sheetOrderIdIndex: SH_R_headers.indexOf('주문ID'),
+            rowData: row
+          });
+        }
+        if (orderId) {
+          const date = getRowValue(row, SH_R_headers, ['체크인', '탑승일', '날짜']);
+          // SH_M에서 조회한 고객명 사용, 없으면 해당 시트의 고객명 사용
+          const sheetCustomerName = getRowValue(row, SH_R_headers, ['한글이름', '고객명', '이름']);
+          const customerName = getCustomerNameByOrderId(orderId) || sheetCustomerName;
+          
+          if (idx < 3) {
+            console.log(`Cruise ${idx}:`, { orderId, customerName, sheetCustomerName, fromSHM: !!getCustomerNameByOrderId(orderId) });
+          }
+          
+          results.push({
+            type: 'cruise',
+            orderId,
+            customerName,
+            customerEnglishName: getRowValue(row, SH_R_headers, ['영문이름', '고객명(영문)']),
+            date,
+            cruise: getRowValue(row, SH_R_headers, ['크루즈', '크루즈명']),
+            roomType: getRowValue(row, SH_R_headers, ['객실종류', '객실타입', '객실']),
+            adult: getRowValue(row, SH_R_headers, ['ADULT', 'CHILD', '성인'])
+          });
+        }
+      });
+    }
+
+    // 스하 차량 (SH_C)
+    if (Array.isArray(SH_C_data)) {
+      SH_C_data.forEach((row, idx) => {
+        const orderId = getRowValue(row, SH_C_headers, ['예약번호', '주문번호', 'ID']);
+        if (orderId) {
+          const date = getRowValue(row, SH_C_headers, ['탑승일', '날짜', '예약일']);
+          const sheetCustomerName = getRowValue(row, SH_C_headers, ['고객명', '이름']);
+          const customerName = getCustomerNameByOrderId(orderId) || sheetCustomerName;
+          
+          results.push({
+            type: 'vehicle',
+            orderId,
+            customerName,
+            date,
+            vehicleNumber: getRowValue(row, SH_C_headers, ['차량번호', '차량']),
+            seatNumber: getRowValue(row, SH_C_headers, ['좌석', '좌석번호']),
+            category: getRowValue(row, SH_C_headers, ['분류', '카테고리'])
+          });
+        }
+      });
+    }
+
+    // 일반 차량 (SH_CC)
+    if (Array.isArray(SH_CC_data)) {
+      SH_CC_data.forEach((row, idx) => {
+        const orderId = getRowValue(row, SH_CC_headers, ['예약번호', '주문번호', 'ID']);
+        if (orderId) {
+          const date = getRowValue(row, SH_CC_headers, ['픽업일시', '픽업일', '날짜']);
+          const sheetCustomerName = getRowValue(row, SH_CC_headers, ['고객명', '이름']);
+          const customerName = getCustomerNameByOrderId(orderId) || sheetCustomerName;
+          
+          results.push({
+            type: 'car',
+            orderId,
+            customerName,
+            date,
+            carType: getRowValue(row, SH_CC_headers, ['차량타입', '차량']),
+            pickupLocation: getRowValue(row, SH_CC_headers, ['픽업장소', '승차지']),
+            dropoffLocation: getRowValue(row, SH_CC_headers, ['하차장소', '하차지'])
+          });
+        }
+      });
+    }
+
+    // 공항 (SH_P)
+    if (Array.isArray(SH_P_data)) {
+      SH_P_data.forEach((row, idx) => {
+        const orderId = getRowValue(row, SH_P_headers, ['예약번호', '주문번호', 'ID']);
+        if (orderId) {
+          const date = getRowValue(row, SH_P_headers, ['예약일', '날짜', '픽업일']);
+          const sheetCustomerName = getRowValue(row, SH_P_headers, ['고객명', '이름']);
+          const customerName = getCustomerNameByOrderId(orderId) || sheetCustomerName;
+          
+          results.push({
+            type: 'airport',
+            orderId,
+            customerName,
+            date,
+            airportName: getRowValue(row, SH_P_headers, ['공항명', '공항']),
+            flightNumber: getRowValue(row, SH_P_headers, ['항공편', '항공사']),
+            time: getRowValue(row, SH_P_headers, ['시간', '시각'])
+          });
+        }
+      });
+    }
+
+    // 호텔 (SH_H)
+    if (Array.isArray(SH_H_data)) {
+      SH_H_data.forEach((row, idx) => {
+        const orderId = getRowValue(row, SH_H_headers, ['예약번호', '주문번호', 'ID']);
+        if (orderId) {
+          const date = getRowValue(row, SH_H_headers, ['체크인일', '날짜', '예약일']);
+          const sheetCustomerName = getRowValue(row, SH_H_headers, ['고객명', '이름']);
+          const customerName = getCustomerNameByOrderId(orderId) || sheetCustomerName;
+          
+          results.push({
+            type: 'hotel',
+            orderId,
+            customerName,
+            date,
+            hotelName: getRowValue(row, SH_H_headers, ['호텔명', '호텔']),
+            roomName: getRowValue(row, SH_H_headers, ['객실', '객실타입']),
+            days: getRowValue(row, SH_H_headers, ['박수', '숙박일'])
+          });
+        }
+      });
+    }
+
+    // 투어 (SH_T)
+    if (Array.isArray(SH_T_data)) {
+      SH_T_data.forEach((row, idx) => {
+        const orderId = getRowValue(row, SH_T_headers, ['예약번호', '주문번호', 'ID']);
+        if (orderId) {
+          const date = getRowValue(row, SH_T_headers, ['시작일', '날짜', '예약일']);
+          const sheetCustomerName = getRowValue(row, SH_T_headers, ['고객명', '이름']);
+          const customerName = getCustomerNameByOrderId(orderId) || sheetCustomerName;
+          
+          results.push({
+            type: 'tour',
+            orderId,
+            customerName,
+            date,
+            tourName: getRowValue(row, SH_T_headers, ['투어명', '투어']),
+            tourType: getRowValue(row, SH_T_headers, ['투어타입', '종류']),
+            participants: getRowValue(row, SH_T_headers, ['인원', '참가자'])
+          });
+        }
+      });
+    }
+
+    // 렌트카 (SH_RC)
+    if (Array.isArray(SH_RC_data)) {
+      SH_RC_data.forEach((row, idx) => {
+        const orderId = getRowValue(row, SH_RC_headers, ['예약번호', '주문번호', 'ID']);
+        if (orderId) {
+          const date = getRowValue(row, SH_RC_headers, ['픽업일', '날짜', '예약일']);
+          const sheetCustomerName = getRowValue(row, SH_RC_headers, ['고객명', '이름']);
+          const customerName = getCustomerNameByOrderId(orderId) || sheetCustomerName;
+          
+          results.push({
+            type: 'rentcar',
+            orderId,
+            customerName,
+            date,
+            carType: getRowValue(row, SH_RC_headers, ['차량타입', '차량']),
+            pickupTime: getRowValue(row, SH_RC_headers, ['픽업시간', '시간']),
+            usagePeriod: getRowValue(row, SH_RC_headers, ['사용기간', '기간'])
+          });
+        }
+      });
+    }
+
+    return results;
+  }, [SH_R_data, SH_R_headers, SH_C_data, SH_C_headers, SH_CC_data, SH_CC_headers, SH_P_data, SH_P_headers, SH_H_data, SH_H_headers, SH_T_data, SH_T_headers, SH_RC_data, SH_RC_headers, SH_M_data, SH_M_headers, getCustomerNameByOrderId]);
+
+  // 필터링된 예약
+  const filteredReservations = useMemo(() => {
+    const selectedDateObj = new Date(selectedDate);
+    selectedDateObj.setHours(0, 0, 0, 0);
+
+    return allReservations.filter(reservation => {
+      // 타입 필터
+      if (typeFilter !== 'all' && reservation.type !== typeFilter) {
+        return false;
+      }
+
+      // 날짜 필터
+      const date = parseDate(reservation.date);
+      if (!date) return false;
+      date.setHours(0, 0, 0, 0);
+
+      return isSameDate(date, selectedDateObj);
+    });
+  }, [allReservations, selectedDate, typeFilter]);
+
+  // 서비스 정보
+  const getServiceInfo = (type) => {
+    const services = {
+      cruise: { icon: '🚢', name: '크루즈', color: '#3B82F6' },
+      car: { icon: '🚗', name: '차량', color: '#3B82F6' },
+      vehicle: { icon: '🚗', name: '스하차량', color: '#A855F7' },
+      airport: { icon: '✈️', name: '공항', color: '#10B981' },
+      hotel: { icon: '🏨', name: '호텔', color: '#F97316' },
+      tour: { icon: '📍', name: '투어', color: '#EF4444' },
+      rentcar: { icon: '🚙', name: '렌트카', color: '#6366F1' }
+    };
+    return services[type] || { icon: '📅', name: '기타', color: '#6B7280' };
+  };
+
+  // 날짜 네비게이션
+  const navigateDate = (direction) => {
+    const newDate = new Date(selectedDate);
+    newDate.setDate(newDate.getDate() + (direction === 'next' ? 1 : -1));
+    setSelectedDate(newDate);
+  };
+
+  // 서비스별 그룹화
+  const groupedByService = useMemo(() => {
+    const grouped = {};
+    filteredReservations.forEach(res => {
+      if (!grouped[res.type]) {
+        grouped[res.type] = [];
+      }
+      grouped[res.type].push(res);
+    });
+    return grouped;
+  }, [filteredReservations]);
+
+  // 예약 카드 렌더링
+  const renderCard = (reservation) => {
+    const info = getServiceInfo(reservation.type);
+
+    return (
+      <div
+        key={`${reservation.orderId}-${reservation.type}`}
+        style={{
+          backgroundColor: '#F9FAFB',
+          border: '1px solid #E5E7EB',
+          borderRadius: '8px',
+          boxShadow: '0 1px 2px rgba(0,0,0,0.05)',
+          padding: '12px',
+          display: 'flex',
+          flexDirection: 'column',
+          height: '100%'
+        }}
+      >
+        {/* 헤더 */}
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: '8px',
+          marginBottom: '8px',
+          paddingBottom: '8px',
+          borderBottom: '1px solid #F3F4F6'
+        }}>
+          <span style={{ fontSize: '1.5rem' }}>{info.icon}</span>
+          <h5 style={{
+            fontWeight: 'bold',
+            fontSize: '0.875rem',
+            flex: 1,
+            color: '#1F2937',
+            margin: 0,
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+            whiteSpace: 'nowrap'
+          }}>
+            {info.name}
+          </h5>
+          <span style={{
+            padding: '4px 8px',
+            borderRadius: '9999px',
+            fontSize: '0.75rem',
+            fontWeight: '500',
+            backgroundColor: info.color + '20',
+            color: info.color
+          }}>
+            예정
+          </span>
+        </div>
+
+        {/* 내용 */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', fontSize: '0.875rem', color: '#374151' }}>
+          {reservation.customerName && (
+            <div style={{
+              fontWeight: 'bold',
+              color: info.color,
+              marginBottom: '4px',
+              borderBottom: '1px solid #F3F4F6',
+              paddingBottom: '4px'
+            }}>
+              {reservation.customerName}
+            </div>
+          )}
+
+          {/* 크루즈 */}
+          {reservation.type === 'cruise' && (
+            <>
+              <div><span style={{ fontWeight: '600', color: '#6B7280' }}>크루즈:</span> {reservation.cruise}</div>
+              <div><span style={{ fontWeight: '600', color: '#6B7280' }}>객실:</span> {reservation.roomType}</div>
+              {reservation.adult && <div><span style={{ fontWeight: '600', color: '#6B7280' }}>인원:</span> {reservation.adult}</div>}
+            </>
+          )}
+
+          {/* 스하차량 */}
+          {reservation.type === 'vehicle' && (
+            <>
+              <div><span style={{ fontWeight: '600', color: '#6B7280' }}>차량:</span> {reservation.vehicleNumber}</div>
+              <div><span style={{ fontWeight: '600', color: '#6B7280' }}>좌석:</span> {reservation.seatNumber}</div>
+              {reservation.category && <div><span style={{ fontWeight: '600', color: '#6B7280' }}>분류:</span> {reservation.category}</div>}
+            </>
+          )}
+
+          {/* 일반 차량 */}
+          {reservation.type === 'car' && (
+            <>
+              <div><span style={{ fontWeight: '600', color: '#6B7280' }}>차량:</span> {reservation.carType}</div>
+              {reservation.pickupLocation && <div><span style={{ fontWeight: '600', color: '#6B7280' }}>승차:</span> {reservation.pickupLocation}</div>}
+              {reservation.dropoffLocation && <div><span style={{ fontWeight: '600', color: '#6B7280' }}>하차:</span> {reservation.dropoffLocation}</div>}
+            </>
+          )}
+
+          {/* 공항 */}
+          {reservation.type === 'airport' && (
+            <>
+              <div><span style={{ fontWeight: '600', color: '#6B7280' }}>공항:</span> {reservation.airportName}</div>
+              <div><span style={{ fontWeight: '600', color: '#6B7280' }}>항공편:</span> {reservation.flightNumber}</div>
+              {reservation.time && <div><span style={{ fontWeight: '600', color: '#6B7280' }}>시간:</span> {reservation.time}</div>}
+            </>
+          )}
+
+          {/* 호텔 */}
+          {reservation.type === 'hotel' && (
+            <>
+              <div><span style={{ fontWeight: '600', color: '#6B7280' }}>호텔:</span> {reservation.hotelName}</div>
+              <div><span style={{ fontWeight: '600', color: '#6B7280' }}>객실:</span> {reservation.roomName}</div>
+              {reservation.days && <div><span style={{ fontWeight: '600', color: '#6B7280' }}>기간:</span> {reservation.days}박</div>}
+            </>
+          )}
+
+          {/* 투어 */}
+          {reservation.type === 'tour' && (
+            <>
+              <div><span style={{ fontWeight: '600', color: '#6B7280' }}>투어:</span> {reservation.tourName}</div>
+              <div><span style={{ fontWeight: '600', color: '#6B7280' }}>종류:</span> {reservation.tourType}</div>
+              {reservation.participants && <div><span style={{ fontWeight: '600', color: '#6B7280' }}>인원:</span> {reservation.participants}</div>}
+            </>
+          )}
+
+          {/* 렌트카 */}
+          {reservation.type === 'rentcar' && (
+            <>
+              <div><span style={{ fontWeight: '600', color: '#6B7280' }}>차량:</span> {reservation.carType}</div>
+              {reservation.pickupTime && <div><span style={{ fontWeight: '600', color: '#6B7280' }}>시간:</span> {reservation.pickupTime}</div>}
+              {reservation.usagePeriod && <div><span style={{ fontWeight: '600', color: '#6B7280' }}>기간:</span> {reservation.usagePeriod}</div>}
+            </>
+          )}
+
+          {/* 날짜 */}
+          <div style={{ marginTop: '8px', paddingTop: '8px', borderTop: '1px solid #F3F4F6', fontWeight: '500' }}>
+            📅 {reservation.date}
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  // 렌더링
+  return (
+    <div style={{ padding: '24px', backgroundColor: '#F3F4F6', minHeight: '100vh' }}>
+      <div style={{ maxWidth: '1280px', margin: '0 auto' }}>
+        {/* 헤더 */}
+        <div style={{
+          backgroundColor: '#FFF',
+          borderRadius: '8px',
+          boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
+          padding: '24px',
+          marginBottom: '24px'
+        }}>
+          <h1 style={{ fontSize: '1.875rem', fontWeight: 'bold', color: '#1F2937', marginBottom: '24px' }}>
+            사용일별 예약 조회
+          </h1>
+
+          {/* 날짜 네비게이션 */}
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            marginBottom: '16px',
+            flexWrap: 'wrap',
+            gap: '16px'
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+              <button
+                onClick={() => navigateDate('prev')}
+                style={{
+                  padding: '8px 12px',
+                  backgroundColor: '#F3F4F6',
+                  border: 'none',
+                  borderRadius: '8px',
+                  cursor: 'pointer',
+                  fontSize: '16px'
+                }}
+              >
+                ◀
+              </button>
+
+              <h2 style={{ fontSize: '1.5rem', fontWeight: '600', margin: 0, minWidth: '200px' }}>
+                {selectedDate.toLocaleDateString('ko-KR', {
+                  year: 'numeric',
+                  month: 'long',
+                  day: 'numeric'
+                })}
+              </h2>
+
+              <button
+                onClick={() => setSelectedDate(new Date())}
+                style={{
+                  padding: '6px 12px',
+                  backgroundColor: '#EFF6FF',
+                  color: '#0284C7',
+                  border: '1px solid #BAE6FD',
+                  borderRadius: '8px',
+                  fontSize: '0.875rem',
+                  fontWeight: '500',
+                  cursor: 'pointer'
+                }}
+              >
+                오늘
+              </button>
+
+              <button
+                onClick={() => navigateDate('next')}
+                style={{
+                  padding: '8px 12px',
+                  backgroundColor: '#F3F4F6',
+                  border: 'none',
+                  borderRadius: '8px',
+                  cursor: 'pointer',
+                  fontSize: '16px'
+                }}
+              >
+                ▶
+              </button>
+            </div>
+          </div>
+
+          {/* 타입 필터 */}
+          <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', alignItems: 'center' }}>
+            <span style={{ fontSize: '1.25rem' }}>🔍</span>
+            <button
+              onClick={() => setTypeFilter('all')}
+              style={{
+                padding: '6px 12px',
+                borderRadius: '9999px',
+                fontSize: '0.875rem',
+                border: 'none',
+                cursor: 'pointer',
+                backgroundColor: typeFilter === 'all' ? '#3B82F6' : '#E5E7EB',
+                color: typeFilter === 'all' ? '#FFF' : '#4B5563'
+              }}
+            >
+              전체
+            </button>
+            {['cruise', 'car', 'vehicle', 'airport', 'hotel', 'tour', 'rentcar'].map(type => (
+              <button
+                key={type}
+                onClick={() => setTypeFilter(type)}
+                style={{
+                  padding: '6px 12px',
+                  borderRadius: '9999px',
+                  fontSize: '0.875rem',
+                  border: 'none',
+                  cursor: 'pointer',
+                  backgroundColor: typeFilter === type ? '#3B82F6' : '#E5E7EB',
+                  color: typeFilter === type ? '#FFF' : '#4B5563'
+                }}
+              >
+                {getServiceInfo(type).name}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* 예약 목록 */}
+        <div style={{
+          backgroundColor: '#FFF',
+          borderRadius: '8px',
+          boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
+          padding: '24px'
+        }}>
+          {loading ? (
+            <div style={{ textAlign: 'center', padding: '48px' }}>
+              <div style={{
+                display: 'inline-block',
+                width: '40px',
+                height: '40px',
+                border: '4px solid #3B82F6',
+                borderTop: 'transparent',
+                borderRadius: '50%',
+                animation: 'spin 1s linear infinite'
+              }} />
+              <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+              <p style={{ marginTop: '16px', color: '#6B7280' }}>데이터를 불러오는 중...</p>
+            </div>
+          ) : filteredReservations.length === 0 ? (
+            <div style={{ textAlign: 'center', padding: '48px' }}>
+              <div style={{ fontSize: '2rem', marginBottom: '16px' }}>📅</div>
+              <h3 style={{ color: '#4B5563', marginBottom: '8px' }}>
+                {typeFilter === 'all' ? '예약된 일정이 없습니다' : `${getServiceInfo(typeFilter).name} 일정이 없습니다`}
+              </h3>
+            </div>
+          ) : (
+            <div>
+              {Object.entries(groupedByService).map(([serviceType, reservationList]) => {
+                if (reservationList.length === 0) return null;
+                const info = getServiceInfo(serviceType);
+                return (
+                  <div key={serviceType} style={{ marginBottom: '32px' }}>
+                    <div style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '12px',
+                      marginBottom: '16px',
+                      paddingBottom: '12px',
+                      borderBottom: '2px solid #E5E7EB'
+                    }}>
+                      <span style={{ fontSize: '1.5rem' }}>{info.icon}</span>
+                      <h3 style={{ fontSize: '1.125rem', fontWeight: '600', color: '#1F2937', margin: 0 }}>
+                        {info.name}
+                        <span style={{ marginLeft: '8px', fontSize: '0.875rem', color: '#6B7280' }}>
+                          ({reservationList.length}건)
+                        </span>
+                      </h3>
+                    </div>
+
+                    <div style={{
+                      display: 'grid',
+                      gridTemplateColumns: 'repeat(auto-fill, minmax(250px, 1fr))',
+                      gap: '16px'
+                    }}>
+                      {reservationList.map((res) => renderCard(res))}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export default UsageDateDashboard;
